@@ -5,3 +5,11 @@ Most A/B test approaches are centered around frequentist hypothesis tests used t
 
 ### Bayesian A/B testing
 Bayesian methods provide several benefits over frequentist methods in the context of A/B tests - namely in interpretability. Instead of p-values you get direct probabilities on whether A is better than B (and by how much). Instead of point estimates your posterior distributions are parametrized random variables which can be summarized any number of ways. Bayesian tests are also immune to ‘peeking’ and are thus valid whenever a test is stopped.
+
+### Methods
+
+Unlike a frequentist method, in a Bayesian approach you first encapsulate your prior beliefs mathematically. This involves choosing a distribution over which you believe your parameter might lie. As you expose groups to different tests, you collect the data and combine it with the prior to get the posterior distribution over the parameter(s) in question. Mathematically, you are looking for P(parameter | data) which is a combination of the prior and posterior (the math, while relatively straightforward, is outside of the scope of this brief intro).
+
+### Usage Examples
+
+We’ll walk through one example, Bernoulli random variable modeling click-through-rate onto a page.
