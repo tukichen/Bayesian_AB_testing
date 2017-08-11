@@ -4,9 +4,9 @@ This notebook presents step by step instruction how to build a Bayesian A/B Test
 * The Shiny web app under construction is https://qiaolinchen.shinyapps.io/ab_test/. 
 * Another way to use is to run on R console.
 <b>
-install.packages("shiny")
+```install.packages("shiny")
 library(shiny)
-runGitHub("Bayesian_AB_testing", "tukichen")
+runGitHub("Bayesian_AB_testing", "tukichen")```
 </b>
 
 Here is an outline of the project:
