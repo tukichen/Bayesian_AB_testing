@@ -10,7 +10,7 @@ library(shinydashboard)
 library(mlxR)
 library('shiny')
 library('ggplot2')
-#source("functions.R")
+source("functions.R")
 
 shinyServer(function(input, output){
 
