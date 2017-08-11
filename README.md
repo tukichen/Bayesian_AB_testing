@@ -1,12 +1,13 @@
 # Bayesian A/B testing
 
 This notebook presents step by step instruction how to build a Bayesian A/B Test Calculator with visualization of results using R.
-The Shiny web app under construction is https://qiaolinchen.shinyapps.io/ab_test/. 
-Another way to use is to run on R console.
-
+* The Shiny web app under construction is https://qiaolinchen.shinyapps.io/ab_test/. 
+* Another way to use is to run on R console.
+<b>
 install.packages("shiny")
 library(shiny)
 runGitHub("Bayesian_AB_testing", "tukichen")
+</b>
 
 Here is an outline of the project:
 
