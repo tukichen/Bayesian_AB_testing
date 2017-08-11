@@ -11,9 +11,9 @@ sidebar <- dashboardSidebar(
               menuItem("Bayesian A/B Test", tabName="plot", icon=icon("line-chart"), selected=TRUE),
               menuItem("Upload and Analyze Data", tabName = "table", icon=icon("table")),
               menuItem("Codes",  icon = icon("file-text-o"),
-                       menuSubItem("Mlxtran", tabName = "pkmodel", icon = icon("angle-right")),
                        menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
-                       menuSubItem("server.R", tabName = "server", icon = icon("angle-right"))
+                       menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
+                       menuSubItem("functions.R", tabName = "functions", icon = icon("angle-right"))
               ),
               menuItem("ReadMe", tabName = "readme", icon=icon("mortar-board"))
   ),
@@ -43,7 +43,7 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
             withMathJax(), 
-            includeMarkdown("readMe.Rmd")
+            includeMarkdown("README.md")
     ),
     tabItem(tabName = "plot",
             fluidRow(
@@ -119,11 +119,11 @@ body <- dashboardBody(
                  tableOutput("table")
             )
     ),
-    tabItem(tabName = "pkmodel",
-            box( width = NULL, status = "primary", solidHeader = TRUE, title="absorptionModel.txt",                
+    tabItem(tabName = "functions",
+            box( width = NULL, status = "primary", solidHeader = TRUE, title="functions.R",
                  downloadButton('downloadData1', 'Download'),
                  br(),br(),
-                 pre(includeText("absorptionModel.txt"))
+                 pre(includeText("functions.R"))
             )
     ),
     tabItem(tabName = "ui",

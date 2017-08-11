@@ -117,58 +117,68 @@ probability_C_beats_A_and_B <- function(alpha_A, beta_A, alpha_B, beta_B, alpha_
 # A function to do Bayesian A/B testing, which will provide a summary table 
 # and have the option to produce density plots and a bar char of probabilities of at test better than the other.
 
-Bayes_AB_test <- function(nA, xA, nB, xB, make_plot=TRUE, 
-                          alpha0= 1, beta_0= 1){  # set both prior parameters to 1 by default
-  # create an empty data frame: 
-  result= data.frame(Test= character(), Users = integer(), Conversion= integer(), CR=double(),  
-                     Uplift= double(), Chance_of_being_best=double() )
-  
-  CR_A = xA/nA*100
-  CR_B = xB/nB*100   
-  uplift_B = (CR_B- CR_A)/CR_A *100
-  
-  alpha_A = alpha_0 + xA
-  alpha_B = alpha_0 + xB  
-  beta_A  = beta_0 + nA-xA
-  beta_B  = beta_0 + nB-xB
-  
-  best_B = 100*prob_B_beats_A (alpha_A, beta_A , alpha_B, beta_B ) 
-  best_A = 100- best_B
-  
-  result= rbind(c("A", nA, xA, CR_A, NA, best_A) , 
-                c("B", nB, xB, CR_B, uplift_B, best_B))
-  colnames(result) = c('Test', 'Users', 'Conversion','CR (%))', 'Uplift (%)', 'Chance of being best (%)')
-  if (make_plot ==TRUE){
-    # -------------make density plot -----------------#
+# -------------make density plot -----------------#
+density_plot <- function(alpha_A, beta_A , alpha_B, beta_B ){
     theta<-seq(0,1,0.001) #create theta range from 0 to 1
     prior <- dbeta(theta, 1,1)
-    posterior_A <- dbeta(theta, alpha_A, beta_A ) 
+    posterior_A <- dbeta(theta, alpha_A, beta_A )
     posterior_B <- dbeta(theta, alpha_B, beta_B )
     
-    par(mfrow = c(2, 1))
-    prob_plot <- plot(theta, prior,  col="gray", lty=2, xlab = 'prop', ylab = "Density",   ylim = c(0,30), 
-                      main = "Prior and Posterior Densitys")
+    
+    prob_plot <- plot(theta, prior,  col="gray", lty=2, xlab = 'prop', ylab = "Density",   ylim = c(0,30),
+    main = "Prior and Posterior Densitys")
     lines(theta, posterior_A, lwd = 3, col="dodgerblue", lty=3)
     lines(theta, posterior_B, lwd = 3, col="orange", lty=3)
     legend("topright",lwd=3,
-           c("prior", "posterior_A","posterior_B"),
-           col = c( "grey","dodgerblue","orange")
+    c("prior", "posterior_A","posterior_B"),
+    col = c( "grey","dodgerblue","orange")
     )
-    # ------------- Best probability Bar chart -----------------#
-    names <-c("A", "B")
-    prob_list = c(best_A, best_B)
-    yy <- barplot(prob_list ,main="Chance of B outperforming A", width = 1, horiz=TRUE,names.arg=names,las=1, 
-                  xlab = "Percent")
-    ## Add text at top of bars
-    text(y = yy,  x = prob_list, label = prob_list, pos = 3, cex = 0.8)
-  }
-  
-  return (result)
 }
 
+# ------------- Best probability Bar chart -----------------#
+bestProb_plot <- function(best_A, best_B){
+    names <-c("A", "B")
+    prob_list = c(best_A, best_B)
+    yy <- barplot(prob_list ,main="Chance of B outperforming A", width = 1, horiz=TRUE,names.arg=names,las=1,
+    xlab = "Percent")
+    ## Add text at top of bars
+    text(y = yy,  x = prob_list, label = prob_list, pos = 3, cex = 0.8)
+    
+}
+
+Bayes_AB_test <- function(nA, xA, nB, xB, make_plot=TRUE,
+alpha0= 1, beta_0= 1){  # set both prior parameters to 1 by default
+    # create an empty data frame:
+    result= data.frame(Test= character(), Users = integer(), Conversion= integer(), CR=double(),
+    Uplift= double(), Chance_of_being_best=double() )
+    
+    CR_A = xA/nA*100
+    CR_B = xB/nB*100
+    uplift_B = (CR_B- CR_A)/CR_A *100
+    
+    alpha_A = alpha_0 + xA
+    alpha_B = alpha_0 + xB
+    beta_A  = beta_0 + nA-xA
+    beta_B  = beta_0 + nB-xB
+    
+    best_B = 100*prob_B_beats_A (alpha_A, beta_A , alpha_B, beta_B )
+    best_A = 100- best_B
+    
+    result= rbind(c("A", nA, xA, CR_A, NA, best_A) ,
+    c("B", nB, xB, CR_B, uplift_B, best_B))
+    colnames(result) = c('Test', 'Users', 'Conversion','CR (%))', 'Uplift (%)', 'Chance of being best (%)')
+    if (make_plot ==TRUE){
+        par(mfrow = c(2, 1))
+        
+        density_plot(alpha_A, beta_A , alpha_B, beta_B )
+        bestProb_plot(best_A, best_B )
+    }
+    
+    return (result)
+}
 
 #----------------------------------------------------------------------------
-# Bayesian A/B testing summary for change of conversion rate: 
+# Bayesian A/B testing summary for change of conversion rate:
 Calculate_change <- function(df, k , a = alpha, nsim = 10000){
   
   CR0 =  CR[CR[,'Test_group'] ==0, c('Day','Cum_Total','Cum_Convert',"CRate") ]
@@ -316,7 +326,7 @@ plot_Uplift <- function( num_tests=3)
   
   
 }
-plot_Uplift(3)
+
 
 #----------------------------------------------------------------------------
 
