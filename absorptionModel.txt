@@ -1,0 +1,53 @@
+[LONGITUDINAL]
+input = {ka, Tk0, alpha, F0, Vm, Km, V, k}
+
+PK:
+
+; first order
+compartment(cmt=1, amount=A1)
+oral(cmt=1, ka)
+elimination(cmt=1, k)
+
+; zero order
+tk0 = max(Tk0, 0.0001)
+compartment(cmt=2, amount=A2)
+oral(cmt=2, Tk0=tk0)
+elimination(cmt=2, k)
+
+; alpha order (ODE)
+depot(target=Ad3)
+
+; sequential zero order - first order
+compartment(cmt=4, amount=A4)
+oral(cmt=4, Tk0=tk0, p=F0)
+oral(cmt=4, ka, Tlag=tk0, p=1-F0)
+elimination(cmt=4, k)
+
+; mixed zero order - first order
+compartment(cmt=5, amount=A5)
+oral(cmt=5, Tk0=tk0, p=F0)
+oral(cmt=5, ka, p=1-F0)
+elimination(cmt=5, k)
+
+; saturated absorption (ODE)
+depot(target=Ad6)
+
+EQUATION:
+if Ad3>0
+  R3 = ka*(Ad3^alpha)
+else
+  R3 = 0
+end
+ddt_Ad3 = -R3
+ddt_A3 = R3 - k*A3
+
+R6 = Vm*Ad6/(Km+Ad6)
+ddt_Ad6 = -R6
+ddt_A6 = R6 - k*A6
+
+C1=A1/V
+C2=A2/V
+C3=A3/V
+C4=A4/V
+C5=A5/V
+C6=A6/V

@@ -1,6 +1,9 @@
 # Bayesian A/B testing
 
-This notebook presents step by step instruction how to build a Bayesian A/B Test Calculator with visualization of results using R.Here is an outline of the project:
+This notebook presents step by step instruction how to build a Bayesian A/B Test Calculator with visualization of results using R.
+The Shiny web app under construction is https://qiaolinchen.shinyapps.io/ab_test/. 
+
+Here is an outline of the project:
 
 ### 1. Dataset simulation and  Data manipulation
 * To assess the performance of the Bayesina A/B test, I simulate datasets for which true test diferences are known.
