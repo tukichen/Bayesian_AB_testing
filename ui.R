@@ -22,10 +22,9 @@ sidebar <- dashboardSidebar(
                    fluidRow(
                      column(1),
                      column(10,
-                    selectInput(inputId = "n_breaks",
-                        label = "Number of bins in histogram (approximate):",
-                        choices = c(10, 20, 35, 50),
-                        selected = 20),
+
+                    selectInput("variable", "Confidence Level",
+                        list("90%" = "90", "95%" = "95",  "99%" = "99")),
 
                     checkboxInput(inputId = "individual_obs",
                         label = strong("Show individual observations"),
@@ -38,32 +37,33 @@ sidebar <- dashboardSidebar(
   )
 
 )
-
+#-----------------------------------------------------------------------------------------
 body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
             withMathJax(), 
             includeMarkdown("README.md")
     ),
-    tabItem(tabName = "plot",
+ #------------------------------------------------------------------------------------
+
+    tabItem(tabName = "plot", headerPanel("A/B Test Analysis"),
             fluidRow(
               column(width = 4, 
                      tabBox( width = NULL,
                              tabPanel(h5("Test Data"),
-                                numericInput(inputId = "nA",
-                                    label = "Users A:",
-                                    value = 100),
-                                numericInput(inputId = "nB",
-                                    label = "Users B:",
-                                    value = 100),
-                                numericInput(inputId = "xA",
-                                    label = "Conversions A:",
-                                    value = 1),
-                                numericInput(inputId = "xB",
-                                    label = "Conversions B:",
-                                    value = 2)
-
-
+                                numericInput(inputId = "Avisitors",
+                                    label = "Number of Control Users:",
+                                    value = 1000),
+                                numericInput(inputId = "Bvisitors",
+                                    label = "Number of Variation Users:",
+                                    value = 1000),
+                                numericInput(inputId = "Aconversions",
+                                    label = "Control Conversions:",
+                                    value = 10),
+                                numericInput(inputId = "Bconversions",
+                                    label = "Variation Conversions:",
+                                    value = 20),
+                                submitButton("Statistical Analysis")
 
                              ),
                              tabPanel(h5("Beta Prior Parameters"),
@@ -71,16 +71,22 @@ body <- dashboardBody(
                                         label = "alpha:",
                                         value = 1),
                                     numericInput(inputId = "betaB",
-                                        label = "beta B:",
+                                        label = "beta:",
                                         value = 1)
 
                              )
                      )),
               column(width = 8,
-                     box(  width = NULL, plotOutput("plot",height="500px"), collapsible = TRUE,
+
+                     box(  width = NULL,
+                        plotOutput("plot",height="500px"), collapsible = TRUE,
                            title = "Plot", status = "primary", solidHeader = TRUE)
-              ))
+                    )
+
+              )
     ),
+    #------------------------------------------------------------------------------------
+
     tabItem(tabName = "table",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="Upload and analyze A/B test data",
 
@@ -119,6 +125,8 @@ body <- dashboardBody(
                  tableOutput("table")
             )
     ),
+    #------------------------------------------------------------------------------------
+
     tabItem(tabName = "functions",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="functions.R",
                  downloadButton('downloadData1', 'Download'),
@@ -142,6 +150,7 @@ body <- dashboardBody(
     )
   )
 )
+#------------------------------------------------------------------------------------
 
 dashboardPage(
   dashboardHeader(title = "Bayesian A/B Test"),
