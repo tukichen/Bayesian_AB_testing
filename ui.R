@@ -23,8 +23,9 @@ sidebar <- dashboardSidebar(
                      column(1),
                      column(10,
 
-                    selectInput("variable", "Confidence Level",
-                        list("90%" = "90", "95%" = "95",  "99%" = "99")),
+                    selectInput(inputId ="alpha", label = "Confidence Level",
+                        choices =list("90%" = 0.1, "95%" = 0.05 ,  "99%" = 0.01 ),
+                        selected = 0.1 ),
 
                     checkboxInput(inputId = "individual_obs",
                         label = strong("Show individual observations"),
@@ -51,26 +52,26 @@ body <- dashboardBody(
               column(width = 4, 
                      tabBox( width = NULL,
                              tabPanel(h5("Test Data"),
-                                numericInput(inputId = "Avisitors",
+                                numericInput(inputId = "nA",
                                     label = "Number of Control Users:",
-                                    value = 1000),
-                                numericInput(inputId = "Bvisitors",
+                                    value = 100),
+                                numericInput(inputId = "nB",
                                     label = "Number of Variation Users:",
-                                    value = 1000),
-                                numericInput(inputId = "Aconversions",
+                                    value = 100),
+                                numericInput(inputId = "xA",
                                     label = "Control Conversions:",
                                     value = 10),
-                                numericInput(inputId = "Bconversions",
+                                numericInput(inputId = "xB",
                                     label = "Variation Conversions:",
                                     value = 20),
                                 submitButton("Statistical Analysis")
 
                              ),
                              tabPanel(h5("Beta Prior Parameters"),
-                                    numericInput(inputId = "alphaA",
+                                    numericInput(inputId = "alpha_0",
                                         label = "alpha:",
                                         value = 1),
-                                    numericInput(inputId = "betaB",
+                                    numericInput(inputId = "beta_0",
                                         label = "beta:",
                                         value = 1)
 
@@ -79,8 +80,8 @@ body <- dashboardBody(
               column(width = 8,
 
                      box(  width = NULL,
-                        plotOutput("plot",height="500px"), collapsible = TRUE,
-                           title = "Plot", status = "primary", solidHeader = TRUE)
+                        plotOutput("ABtest_density",height="500px"), collapsible = TRUE,
+                           title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
                     )
 
               )

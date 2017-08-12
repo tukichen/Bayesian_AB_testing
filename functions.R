@@ -118,14 +118,17 @@ probability_C_beats_A_and_B <- function(alpha_A, beta_A, alpha_B, beta_B, alpha_
 # and have the option to produce density plots and a bar char of probabilities of at test better than the other.
 
 # -------------make density plot -----------------#
-density_plot <- function(alpha_A, beta_A , alpha_B, beta_B ){
+density_plot <- function(alpha_A, beta_A , alpha_B, beta_B, alpha_0, beta_0 ){
     theta<-seq(0,1,0.001) #create theta range from 0 to 1
-    prior <- dbeta(theta, 1,1)
+    prior <- dbeta(theta, alpha_0, beta_0)
     posterior_A <- dbeta(theta, alpha_A, beta_A )
     posterior_B <- dbeta(theta, alpha_B, beta_B )
     
+    min_prob = min(min(prior) , min(posterior_A), min(posterior_B))
+    max_prob = max(max(prior) , max(posterior_A), max(posterior_B))
     
-    prob_plot <- plot(theta, prior,  col="gray", lty=2, xlab = 'prop', ylab = "Density",   ylim = c(0,30),
+    prob_plot <- plot(theta, prior,  col="gray", lty=2, 
+                      xlab = 'prop', ylab = "Density",   ylim = c(min_prob ,max_prob),
     main = "Prior and Posterior Densitys")
     lines(theta, posterior_A, lwd = 3, col="dodgerblue", lty=3)
     lines(theta, posterior_B, lwd = 3, col="orange", lty=3)
@@ -139,42 +142,54 @@ density_plot <- function(alpha_A, beta_A , alpha_B, beta_B ){
 bestProb_plot <- function(best_A, best_B){
     names <-c("A", "B")
     prob_list = c(best_A, best_B)
-    yy <- barplot(prob_list ,main="Chance of B outperforming A", width = 1, horiz=TRUE,names.arg=names,las=1,
+    yy <- barplot(prob_list ,main="Chance of B outperforming A", width = 1, 
+                  horiz=TRUE,names.arg=names,las=1,
     xlab = "Percent")
     ## Add text at top of bars
     text(y = yy,  x = prob_list, label = prob_list, pos = 3, cex = 0.8)
     
 }
+#----------------------------------------------------------------------------
 
-Bayes_AB_test <- function(nA, xA, nB, xB, make_plot=TRUE,
-alpha0= 1, beta_0= 1){  # set both prior parameters to 1 by default
-    # create an empty data frame:
-    result= data.frame(Test= character(), Users = integer(), Conversion= integer(), CR=double(),
-    Uplift= double(), Chance_of_being_best=double() )
-    
-    CR_A = xA/nA*100
-    CR_B = xB/nB*100
-    uplift_B = (CR_B- CR_A)/CR_A *100
-    
-    alpha_A = alpha_0 + xA
-    alpha_B = alpha_0 + xB
-    beta_A  = beta_0 + nA-xA
-    beta_B  = beta_0 + nB-xB
-    
-    best_B = 100*prob_B_beats_A (alpha_A, beta_A , alpha_B, beta_B )
-    best_A = 100- best_B
-    
-    result= rbind(c("A", nA, xA, CR_A, NA, best_A) ,
-    c("B", nB, xB, CR_B, uplift_B, best_B))
-    colnames(result) = c('Test', 'Users', 'Conversion','CR (%))', 'Uplift (%)', 'Chance of being best (%)')
-    if (make_plot ==TRUE){
-        par(mfrow = c(2, 1))
-        
-        density_plot(alpha_A, beta_A , alpha_B, beta_B )
-        bestProb_plot(best_A, best_B )
-    }
-    
-    return (result)
+Bayes_AB_test <- function(nA, xA, nB, xB, 
+                          out_data = TRUE, bestProb_plot= FALSE, density_plot=FALSE, 
+                          alpha_0= 1, beta_0= 1,  # set both prior parameters to 1 by default
+                          digit =3  ){ 
+  # create an empty data frame: 
+  result= data.frame(Test= character(), Users = integer(), Conversion= integer(), CR=double(),  
+                     Uplift= double(), Chance_of_being_better=double() , p_value =double())
+  # Conversion rate and uplift
+  CR_A = xA/nA*100
+  CR_B = xB/nB*100   
+  uplift_B = (CR_B- CR_A)/CR_A *100
+  
+  # The posterior beta-distritubion of theta_A and theta_B
+  alpha_A = alpha_0 + xA
+  alpha_B = alpha_0 + xB  
+  beta_A  = beta_0 + nA-xA
+  beta_B  = beta_0 + nB-xB
+  
+  # Probablity of being better: 
+  best_B = 100*prob_B_beats_A (alpha_A, beta_A , alpha_B, beta_B ) 
+  best_A = 100- best_B
+  
+  p_value = fisher.test(matrix(c(xA, nA-xA, xB, nB-xB), nrow = 2 ) , alternative = "greater")$p.value
+  # combine and save to result
+  result= rbind(c("A", nA, xA, round(CR_A, digits = digit) , 
+                  NA, round(best_A, digits = digit), NA ) , 
+                c("B", nB, xB, round(CR_B, digits = digit) ,  round(uplift_B, digits = digit)  ,
+                  round(best_B, digits = digit),  round( p_value, digits=digit ) ) )
+  
+  colnames(result) = c('Test', 'Users', 'Conversion','Conv Rate (%))', 
+                       'Uplift (%)', 'Chance of being better(%)', 'frequentist p-value')
+  if (density_plot ==TRUE){
+    density_plot(alpha_A, beta_A , alpha_B, beta_B , alpha_0, beta_0)
+  }
+  if (bestProb_plot ==TRUE){
+    bestProb_plot(round(best_A, digits= digit) , round(best_B, digits= digit) )
+  }
+  
+  if(out_data ==TRUE) {return (result)}
 }
 
 #----------------------------------------------------------------------------
@@ -304,6 +319,7 @@ plot_Uplift <- function( num_tests=3)
   
   legend(50,  80, legend=c("Test 1", "Test 2", "A/A Test"),
          col=c("red", cbPalette[2:k]), lty=1:(k+1), cex=0.8, title="Test group")
+  
   #--------------------------------------------------------------------------
   column ="Prob_better"
   title ="Probability (%) of better than default over time"
