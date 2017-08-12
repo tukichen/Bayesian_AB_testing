@@ -88,8 +88,10 @@ body <- dashboardBody(
  tabItem(tabName = "simulate", headerPanel("A/B Test Analysis"),
          fluidRow(
            column(width = 4, 
-                  tabBox( width = NULL,
-                          tabPanel(h5("Set True Values"),
+                  box( width = NULL,  solidHeader = TRUE, 
+                       title="Set True Values for Simulation", 
+                                   submitButton("Simulate Data and Tests"),
+                                   br(), 
                                    sliderInput(  inputId = "pA",
                                                  label = "Test A Convertion Rate (%):", value = 2,  
                                                  min = 0, max = 100, step= 1),
@@ -108,27 +110,31 @@ body <- dashboardBody(
                                    sliderInput(  "test_duration",  
                                                  label = "Duration of tests:", 
                                                  min = 10, max = 300, value = 60, step= 1),
-                                   dateInput('start_date',
-                                             label = 'Start Date input: yyyy-mm-dd',
-                                             value = Sys.Date()
-                                   ),
-                                   submitButton("Simulate Data and Perform Tests"),
-                                   
-                                   br(),br(),                                  
-                                   downloadButton('downloadTable', 'Download simulated data'),
-                                   br(),br(),
-                                   tableOutput("table")
-                          ),
-                          tabPanel(h5("Beta Prior Parameters"),
-                                   numericInput(inputId = "alpha_0_sim",
-                                                label = "alpha:",
-                                                value = 1),
-                                   numericInput(inputId = "beta_0_sim",
-                                                label = "beta:",
-                                                value = 1),
-                                   submitButton("Simulate Data and Perform Tests")
-
-                          )
+     
+                                h5("Beta Prior Parameters"),
+                                fluidRow(
+                                    column(width = 5,
+                                           numericInput(inputId = "alpha_0_sim", label = "alpha:",
+                                                        value = 1.0, min = 0, step=0.1 )
+                                           ),
+                                    column(width = 5,                                     
+                                          numericInput(inputId = "beta_0_sim", label = "beta:", 
+                                                       value = 1.0, min = 0, step=0.1  )
+                                          )
+                                ),
+                       dateInput('start_date',
+                                 label = 'Start Date input: yyyy-mm-dd',
+                                 value = Sys.Date()
+                       ),
+                       
+                       br(),br(),                                  
+                       downloadButton('downloadTable', 'Download raw data'),
+                       br(),br(),
+                       tableOutput("table1"),
+                       downloadButton('downloadTable1', 'Download analyzed data'),
+                       br(),br(),
+                       tableOutput("table2")
+                          
                   )),
            column(width = 8 #,
                   
