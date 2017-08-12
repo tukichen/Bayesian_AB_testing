@@ -9,6 +9,7 @@ sidebar <- dashboardSidebar(
   hr(),
   sidebarMenu(id="tabs",
               menuItem("Bayesian A/B Test", tabName="plot", icon=icon("line-chart"), selected=TRUE),
+              menuItem("A/B Test on simulated data", tabName = "simulate", icon=icon("table")),
               menuItem("Upload and Analyze Data", tabName = "table", icon=icon("table")),
               menuItem("Codes",  icon = icon("file-text-o"),
                        menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
@@ -25,11 +26,7 @@ sidebar <- dashboardSidebar(
 
                     selectInput(inputId ="alpha", label = "Confidence Level",
                         choices =list("90%" = 0.1, "95%" = 0.05 ,  "99%" = 0.01 ),
-                        selected = 0.1 ),
-
-                    checkboxInput(inputId = "individual_obs",
-                        label = strong("Show individual observations"),
-                        value = FALSE)
+                        selected = 0.1 ) 
                      )
 
 
@@ -53,18 +50,18 @@ body <- dashboardBody(
                      tabBox( width = NULL,
                              tabPanel(h5("Test Data"),
                                 numericInput(inputId = "nA",
-                                    label = "Number of Control Users:",
+                                    label = "Test A Users:",
                                     value = 100),
                                 numericInput(inputId = "nB",
-                                    label = "Number of Variation Users:",
+                                    label = "Test B Users:",
                                     value = 100),
                                 numericInput(inputId = "xA",
-                                    label = "Control Conversions:",
+                                    label = "Test A Conversions:",
                                     value = 10),
                                 numericInput(inputId = "xB",
-                                    label = "Variation Conversions:",
+                                    label = "Test B Conversions:",
                                     value = 20),
-                                submitButton("Statistical Analysis")
+                                submitButton("Perform A/B Test")
 
                              ),
                              tabPanel(h5("Beta Prior Parameters"),
@@ -73,21 +70,83 @@ body <- dashboardBody(
                                         value = 1),
                                     numericInput(inputId = "beta_0",
                                         label = "beta:",
-                                        value = 1)
-
+                                        value = 1),
+                                    submitButton("Perform A/B Test")
                              )
                      )),
               column(width = 8,
-
+                     
+                     box(  width = NULL, tableOutput("single_ABtest"),
+                        collapsible = TRUE,
+                           title = "Bayesian A/B Test Results", status = "primary", solidHeader = TRUE),
                      box(  width = NULL,
-                        plotOutput("ABtest_density",height="500px"), collapsible = TRUE,
+                           plotOutput("ABtest_density",height="450px"), 
+                           plotOutput("ABtest_bestProb",height="250px"), collapsible = TRUE,
                            title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
                     )
 
               )
     ),
     #------------------------------------------------------------------------------------
+ tabItem(tabName = "simulate", headerPanel("A/B Test Analysis"),
+         fluidRow(
+           column(width = 4, 
+                  tabBox( width = NULL,
+                          tabPanel(h5("Set True Values"),
+                                   sliderInput(  inputId = "pA",
+                                                 label = "Test A Convertion Rate (%):", value = 2,  
+                                                 min = 0, max = 100, step= 1),
+                                   sliderInput(  inputId = "pB",
+                                                 label = "Test B Convertion Rate (%):", value = 4,  
+                                                 min = 0, max = 100, step= 1),
+                                   sliderInput(  inputId = "pC",
+                                                 label = "Test C Convertion Rate (%):", value = 2.5,  
+                                                 min = 0, max = 100, step= 1),
+                                   #sliderInput(  inputId = "pD",
+                                   #               label = "Test D Convertion Rate (%):", value = 0,  
+                                   #               min = 0, max = 100, step= 1),
+                                   sliderInput(  "counts",  
+                                                label = "Total users for each test:", 
+                                               min = 500, max = 20000, value = 10000, step= 1),
+                                   sliderInput(  "test_duration",  
+                                                 label = "Duration of tests:", 
+                                                 min = 10, max = 300, value = 60, step= 1),
+                                   dateInput('start_date',
+                                             label = 'Start Date input: yyyy-mm-dd',
+                                             value = Sys.Date()
+                                   ),
+                                   submitButton("Simulate Data and Perform Tests"),
+                                   
+                                   br(),br(),                                  
+                                   downloadButton('downloadTable', 'Download simulated data'),
+                                   br(),br(),
+                                   tableOutput("table")
+                          ),
+                          tabPanel(h5("Beta Prior Parameters"),
+                                   numericInput(inputId = "alpha_0_sim",
+                                                label = "alpha:",
+                                                value = 1),
+                                   numericInput(inputId = "beta_0_sim",
+                                                label = "beta:",
+                                                value = 1),
+                                   submitButton("Simulate Data and Perform Tests")
 
+                          )
+                  )),
+           column(width = 8 #,
+                  
+                  #box(  width = NULL, tableOutput("single_ABtest"),
+                  #      collapsible = TRUE,
+                  #      title = "Bayesian A/B Test Results", status = "primary", solidHeader = TRUE),
+                  #box(  width = NULL,
+                  #      plotOutput("ABtest_density",height="450px"), 
+                  #      plotOutput("ABtest_bestProb",height="250px"), collapsible = TRUE,
+                  #      title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
+           )
+           
+         )
+ ),
+ 
     tabItem(tabName = "table",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="Upload and analyze A/B test data",
 
@@ -119,11 +178,9 @@ body <- dashboardBody(
                 fileInput("file", label = h5("Upload a CSV file with 3 columns: Test_group (0,1,...), Date (YYYY-MM-DD), and Convert (1=yes, 0=No)")),
 
                 hr(),
-                fluidRow(column(5, verbatimTextOutput("value"))),
+                fluidRow(column(5, verbatimTextOutput("value")))
 
-                 downloadButton('downloadTable', 'Download'),
-                 br(),br(),
-                 tableOutput("table")
+
             )
     ),
     #------------------------------------------------------------------------------------

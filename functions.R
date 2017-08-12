@@ -1,5 +1,30 @@
 ## A collection of functions called by server.R
+library(dplyr)
+library(ggplot2)
+library(BayesFactor)
 
+#----------------------------------------------------------------------------
+## Simulate datasets with known true proportion 
+
+simulate_data <- function(num_tests, start_date, test_duration,counts , prob_list, alpha){
+  for (i in 0:num_tests) {
+    assign(paste0("DF", i), data.frame(
+      Test_group = i, 
+      Date = sample(seq(start_date, start_date+ test_duration -1 , by="day"), counts, replace = TRUE ), 
+      Convert = rbinom(n = counts, size= 1, prob = prob_list[i+1]))  
+    )
+  }
+  
+  # Concatenate into one long dataset, on row corresponding to a users
+  DF = DF0
+  for ( k in 1:num_tests) {
+    DF= rbind(DF, get(paste0("DF", k)) )} 
+  return(DF)
+}
+
+
+
+#----------------------------------------------------------------------------
 # A function to do data manipulation
 
 transform_data <- function(df ,   # data frame 
@@ -173,15 +198,21 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
   best_B = 100*prob_B_beats_A (alpha_A, beta_A , alpha_B, beta_B ) 
   best_A = 100- best_B
   
-  p_value = fisher.test(matrix(c(xA, nA-xA, xB, nB-xB), nrow = 2 ) , alternative = "greater")$p.value
+  mat = matrix(c(xA, nA-xA, xB, nB-xB), nrow = 2 ) 
+  p_value = fisher.test( mat , alternative = "two.sided")$p.value
+  
+  BF = as.numeric(as.vector( contingencyTableBF( mat , sampleType = "indepMulti", fixedMargin = "cols")))
+  #-------------------------------------------------------------------
   # combine and save to result
   result= rbind(c("A", nA, xA, round(CR_A, digits = digit) , 
-                  NA, round(best_A, digits = digit), NA ) , 
-                c("B", nB, xB, round(CR_B, digits = digit) ,  round(uplift_B, digits = digit)  ,
+                  NA, NA, round(best_A, digits = digit), NA ) , 
+                c("B", nB, xB, round(CR_B, digits = digit) ,  round(uplift_B, digits = digit),
+                  round(BF, digits = digit),    
                   round(best_B, digits = digit),  round( p_value, digits=digit ) ) )
   
   colnames(result) = c('Test', 'Users', 'Conversion','Conv Rate (%))', 
-                       'Uplift (%)', 'Chance of being better(%)', 'frequentist p-value')
+                       'Uplift (%)', 'Bayes Factor','Chance of being better(%)', 'frequentist p-value')
+  #-------------------------------------------------------------------
   if (density_plot ==TRUE){
     density_plot(alpha_A, beta_A , alpha_B, beta_B , alpha_0, beta_0)
   }
