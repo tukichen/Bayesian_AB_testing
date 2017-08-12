@@ -28,14 +28,21 @@ shinyServer(function(input, output){
     
     output$ABtest_density <- renderPlot({
       density_plot <- Bayes_AB_test( nA = input$nA, xA= input$xA, nB = input$nB, xB = input$xB, 
-                               alpha_0 = input$alpha_0, beta_0= input$beta_0, 
+                               alpha_0 = input$alpha_0, beta_0= input$beta_0, out_data = FALSE, 
                                density_plot =TRUE )
       return(density_plot)
     })
     
+    output$ABtest_change_density <- renderPlot({
+      density_plot <- Bayes_AB_test( nA = input$nA, xA= input$xA, nB = input$nB, xB = input$xB, 
+                                     alpha_0 = input$alpha_0, beta_0= input$beta_0, out_data = FALSE, 
+                                     diff_plot =TRUE )
+      return(density_plot)
+    })    
+    
     output$ABtest_bestProb <- renderPlot({
       bestProb_plot <- Bayes_AB_test( nA = input$nA, xA= input$xA, nB = input$nB, xB = input$xB, 
-                                     alpha_0 = input$alpha_0, beta_0= input$beta_0, 
+                                     alpha_0 = input$alpha_0, beta_0= input$beta_0, out_data = FALSE, 
                                      bestProb_plot =TRUE )
       return(bestProb_plot)
     })   
@@ -62,9 +69,9 @@ shinyServer(function(input, output){
     })
     
     #-------------------------------------------------------------------------------
-    output$Bayesian_change_plot <- renderTable({
-        Bayes_plot <- 
-    })
+    #output$Bayesian_change_plot <- renderTable({
+    #    Bayes_plot <- 
+    #})
     #-------------------------------------------------------------------------------
     output$Freq_change_plot <- renderTable({
       

@@ -44,48 +44,45 @@ body <- dashboardBody(
     ),
  #------------------------------------------------------------------------------------
 
-    tabItem(tabName = "plot", headerPanel("A/B Test Analysis"),
-            fluidRow(
-              column(width = 4, 
-                     tabBox( width = NULL,
-                             tabPanel(h5("Test Data"),
-                                numericInput(inputId = "nA",
-                                    label = "Test A Users:",
-                                    value = 100),
-                                numericInput(inputId = "nB",
-                                    label = "Test B Users:",
-                                    value = 100),
-                                numericInput(inputId = "xA",
-                                    label = "Test A Conversions:",
-                                    value = 10),
-                                numericInput(inputId = "xB",
-                                    label = "Test B Conversions:",
-                                    value = 20),
-                                submitButton("Perform A/B Test")
-
-                             ),
-                             tabPanel(h5("Beta Prior Parameters"),
-                                    numericInput(inputId = "alpha_0",
-                                        label = "alpha:",
-                                        value = 1),
-                                    numericInput(inputId = "beta_0",
-                                        label = "beta:",
-                                        value = 1),
-                                    submitButton("Perform A/B Test")
-                             )
-                     )),
-              column(width = 8,
-                     
+    tabItem(tabName = "plot", 
+            box( width = NULL,  solidHeader = TRUE,  collapsible = TRUE, status = "primary",
+                 title="Input Test Data and Prior Parameters",
+                          fluidRow( column(3, 
+                                       numericInput(inputId = "nA",min = 0, step=1, 
+                                                    label = "Users A:", value = 110 ),                                       
+                                       numericInput(inputId = "nB", min = 0, step=1, 
+                                                    label = "Users B:", value = 90)                                   
+                                       ),
+                                  column(3, 
+                                       numericInput(inputId = "xA", min = 0, step=1, 
+                                                    label = "Conversions A:", value = 20),
+                                       numericInput(inputId = "xB", min = 0, step=1, 
+                                                    label = "Conversions B:", value = 29)
+                                       ) ,
+                                column(3, 
+                                    numericInput(inputId = "alpha_0",  min = 0, step=0.1, 
+                                                 label = "alpha:", value = 1),
+                                    numericInput(inputId = "beta_0",  min = 0, step=0.1, 
+                                                 label = "beta:", value = 1)
+                                    )
+                          ),
+                          submitButton("Perform A/B Test")
+                     ),
                      box(  width = NULL, tableOutput("single_ABtest"),
                         collapsible = TRUE,
                            title = "Bayesian A/B Test Results", status = "primary", solidHeader = TRUE),
                      box(  width = NULL,
                            plotOutput("ABtest_density",height="450px"), 
-                           plotOutput("ABtest_bestProb",height="250px"), collapsible = TRUE,
-                           title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
-                    )
+                           fluidRow( 
+                             column(6 , plotOutput("ABtest_change_density",height="400px") ),
+                             column(6, plotOutput("ABtest_bestProb",height="300px")  )
 
-              )
+                                    ),
+                           collapsible = TRUE,
+                           title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
+                    
+
+              
     ),
     #------------------------------------------------------------------------------------
  tabItem(tabName = "simulate", headerPanel("A/B Test Analysis"),
@@ -148,7 +145,8 @@ body <- dashboardBody(
  ),
  
     tabItem(tabName = "table",
-            box( width = NULL, status = "primary", solidHeader = TRUE, title="Upload and analyze A/B test data",
+            box( width = NULL, status = "primary", solidHeader = TRUE, 
+                 title="Upload and analyze A/B test data",
 
                 # Sidebar with controls to provide a caption, select a dataset,
                 # and specify the number of observations to view. Note that
