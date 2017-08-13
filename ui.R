@@ -16,7 +16,7 @@ sidebar <- dashboardSidebar(
                        menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
                        menuSubItem("functions.R", tabName = "functions", icon = icon("angle-right"))
               ),
-              menuItem("ReadMe", tabName = "readme", icon=icon("mortar-board"))
+              menuItem("Jupyter Notebook- Anotatation", tabName = "readme", icon=icon("mortar-board"))
   ),
   hr(),
   conditionalPanel("input.tabs=='plot' or input.tabs=='table'",
@@ -40,7 +40,8 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
             withMathJax(), 
-            includeMarkdown("README.md")
+            #includeMarkdown("README.md")
+            includeHTML("Bayesian_AB_testing.html")
     ),
  #------------------------------------------------------------------------------------
 
