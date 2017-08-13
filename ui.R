@@ -65,7 +65,7 @@ body <- dashboardBody(
                                                  label = "beta:", value = 1)
                                     )
                           ) 
-                  , submitButton("Perform A/B Test")
+                  #, submitButton("Perform A/B Test")
                      ),
                      box(  width = NULL, tableOutput("single_ABtest"),
                         collapsible = TRUE,
@@ -89,7 +89,7 @@ body <- dashboardBody(
            column(width = 3, 
                   box( width = NULL,  solidHeader = TRUE, 
                        title="Set True Values for Simulation", 
-                                   submitButton("Simulate Data"),
+                                   #submitButton("Simulate Data"),
                                    br(), 
                                    sliderInput(  inputId = "pA",
                                                  label = "Test 0 Convertion Rate (%):", value = 2,  
