@@ -10,8 +10,8 @@ sidebar <- dashboardSidebar(
   sidebarMenu(id="tabs",
               menuItem("Bayesian A/B Test", tabName="plot", icon=icon("line-chart"), selected=TRUE),
               menuItem("A/B Test on simulated data", tabName = "simulate", icon=icon("table")),
-              menuItem("Upload and Analyze Data", tabName = "table", icon=icon("table")),
-              menuItem("Codes",  icon = icon("file-text-o"),
+              menuItem("Upload and Analyze Data", tabName = "table", icon=icon("dashboard")),
+              menuItem("Download Codes",  icon = icon("file-text-o"),
                        menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
                        menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
                        menuSubItem("functions.R", tabName = "functions", icon = icon("angle-right"))
@@ -19,7 +19,7 @@ sidebar <- dashboardSidebar(
               menuItem("Jupyter Notebook- Anotatation", tabName = "readme", icon=icon("mortar-board"))
   ),
   hr(),
-  conditionalPanel("input.tabs=='plot' or input.tabs=='table'",
+  conditionalPanel("input.tabs in c('plot', 'simulate','table') ",
                    fluidRow(
                      column(1),
                      column(10,
@@ -40,8 +40,8 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
             withMathJax(), 
-            #includeMarkdown("README.md")
-            includeHTML("Bayesian_AB_testing.html")
+            includeMarkdown("README.md")
+            #includeHTML("Bayesian_AB_testing.html")
     ),
  #------------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ body <- dashboardBody(
                                                  label = "beta:", value = 1)
                                     )
                           ) 
-                  #, submitButton("Perform A/B Test")
+                  , submitButton("Perform A/B Test")
                      ),
                      box(  width = NULL, tableOutput("single_ABtest"),
                         collapsible = TRUE,

@@ -97,53 +97,53 @@ shinyServer(function(input, output){
     output$plot1 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, logBF,colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       return(p)
     })
     output$plot2 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, p_value,colour= as.factor(Test_group) ))  +  
-                   geom_point() +  geom_line()
+                   geom_point() +  geom_line() + theme(legend.position="bottom")
       return(p)
     })
     output$plot3 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, Uplift,colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       return(p)
     })
     output$plot4 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, prob_better,colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       return(p)
     })
     #-------------------------------------------------------------------------------
     output$B1 <- renderPlot({
       data = as.data.frame(sim_data())
       p = ggplot(data, aes(Day, Post_mean, colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       p <- p + geom_ribbon(aes(ymin=data$Cred_LL, ymax=data$Cred_UL), linetype=2, alpha=0.1)
       return(p)
     })
     output$F1 <- renderPlot({
       data = as.data.frame(sim_data())
       p = ggplot(data, aes(Day, CRate, colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       p <- p + geom_ribbon(aes(ymin=data$Conf_LL, ymax=data$Conf_UL), linetype=2, alpha=0.1)
       return(p)
     })
     output$B2 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, Post_mean ,colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       p <- p + geom_ribbon(aes(ymin=data$Cred_LL, ymax=data$Cred_UL), linetype=2, alpha=0.1)
       return(p)
     })
     output$F2 <- renderPlot({
       data = as.data.frame(change_data())
       p = ggplot(data, aes(Day, CRate_change, colour= as.factor(Test_group) ))  +  
-        geom_point() +  geom_line()
+        geom_point() +  geom_line() + theme(legend.position="bottom")
       p <- p + geom_ribbon(aes(ymin=data$Conf_LL, ymax=data$Conf_UL), linetype=2, alpha=0.1)
       return(p)
     })    
@@ -211,13 +211,27 @@ shinyServer(function(input, output){
     })
     #-------------------------------------------------------------------------------
     #-------------------------------------------------------------------------------
-    
-    output$downloadTable <- downloadHandler(
-    filename = "table.csv",
-    content = function(file) {
-        write.csv(output$sim_data, file)
-    }
+    # download codes: 
+    output$downloadUI <- downloadHandler(
+    filename = "ui.R",
+    content = function(file) {   file.copy("ui.R", file) }
     )
+    output$downloadServer <- downloadHandler(
+      filename = "server.R",
+      content = function(file) {   file.copy("ui.R", file) }
+    )
+    output$downloadFunction <- downloadHandler(
+      filename = "functions.R",
+      content = function(file) {   file.copy("ui.R", file) }
+    )
+    
+    output$downloadData <- downloadHandler(
+      filename = function() { paste(input$dataset, '.csv', sep='') },
+      content = function(file) {
+        write.csv(datasetInput(), file)
+      }
+    )
+    
     #-------------------------------------------------------------------------------
     #-------------------------------------------------------------------------------
     

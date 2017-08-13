@@ -6,28 +6,21 @@ This notebook presents step by step instruction how to build a Bayesian A/B Test
 
 install.packages("shiny");  library(shiny); runGitHub("Bayesian_AB_testing", "tukichen")
 
-Here is an outline of the project:
+## Functions of this web app:
+### 1. Bayesian A/B test Calculator: 
+- Perform a single A/B testing using input test data and prior parameters 
+- Summarize the Bayes factor, point estimate of rate change with credible interval, probability of variant better than default, and a frequentist p-value.
+- Visualizae prior and posterior probabilities
 
-### 1. Dataset simulation and  Data manipulation
-* To assess the performance of the Bayesina A/B test, I simulate datasets for which true test diferences are known.
-* Write functions to process data and compute the cumulative counts and conversions.
+### 2. Compare performance of Bayesian and Frequentist A/B Tesing using Simulation
+* Simulate datasets for which true test diferences are known.
+- Summarize and visualize the conversion rates change over time
+- Visualize the trends of conversion rate change over time with CI (Bayesian credible interval or frequentist confidence interval) over time
+- Visualize the trends of the following quantities over time:  Bayes factor, p-value, Uplift probability of variant better than control 
 
-### 2. Bayesian A/B test: 
-Write functions to do A/B testing for data observed up to a particular day: 
-   - Summarize cumulative counts and cumulative conversion rates by group
-   - Derive posterior probability, point estimates and credible interval of difference in proportion
-   - Perform Bayesian testing using Bayes factors
-   - Visualization of prior, and posterior probabilities
-
-### 3. Repeat Bayesian A/B test on cumulative conversion rate over time: 
-For all days, perform Bayesian A/B testing using the above functions:
-   - When the user select a particular day after the tests begin, give summaries of Bayesian A/B testing
-   - Plot the point estimates of difference in proportion, and thier credible interval over time
-   - Plot the probability of each test being the best over time
-   - Plot the Bayes factor over time 
-
-### 4. Wrap all functions to build a Shiny web app 
-Users can use this app to read A/B test data, perform tests, plot the pior and posterior probabilities, monitor the test progress by examing the trend of cumulative conversion rate change over time, and make decisions.
+### 3. Upload data and perform Bayesian A/B test: 
+- Perform A/B test on datasets uploaded by users
+- Give the same summary and visualization as above in simulation part
 
 
 ## Backgroups and Methods
