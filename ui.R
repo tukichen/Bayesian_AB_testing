@@ -19,12 +19,12 @@ sidebar <- dashboardSidebar(
               menuItem("ReadMe", tabName = "readme", icon=icon("mortar-board"))
   ),
   hr(),
-  conditionalPanel("input.tabs=='plot'",
+  conditionalPanel("input.tabs=='plot' or input.tabs=='table'",
                    fluidRow(
                      column(1),
                      column(10,
 
-                    selectInput(inputId ="alpha", label = "Confidence Level",
+                    selectInput(inputId ="Conf_alpha", label = "Confidence Level",
                         choices =list("90%" = 0.1, "95%" = 0.05 ,  "99%" = 0.01 ),
                         selected = 0.1 ) 
                      )
@@ -65,15 +65,16 @@ body <- dashboardBody(
                                     numericInput(inputId = "beta_0",  min = 0, step=0.1, 
                                                  label = "beta:", value = 1)
                                     )
-                          ),submitButton("Perform A/B Test")
+                          ) 
+                  #, submitButton("Perform A/B Test")
                      ),
                      box(  width = NULL, tableOutput("single_ABtest"),
                         collapsible = TRUE,
                            title = "Bayesian A/B Test Results", status = "primary", solidHeader = TRUE),
                      box(  width = NULL,
-                           plotOutput("ABtest_density",height="450px"), 
+                           plotOutput("ABtest_density",height="400px"), 
                            fluidRow( 
-                             column(6 , plotOutput("ABtest_change_density",height="400px") ),
+                             column(6 , plotOutput("ABtest_change_density",height="350px") ),
                              column(6, plotOutput("ABtest_bestProb",height="300px")  )
 
                                     ),
@@ -86,29 +87,29 @@ body <- dashboardBody(
     #------------------------------------------------------------------------------------
  tabItem(tabName = "simulate", headerPanel("A/B Test Analysis"),
          fluidRow(
-           column(width = 4, 
+           column(width = 3, 
                   box( width = NULL,  solidHeader = TRUE, 
                        title="Set True Values for Simulation", 
-                                   #submitButton("Simulate Data and Tests"),
+                                   submitButton("Simulate Data and Tests"),
                                    br(), 
                                    sliderInput(  inputId = "pA",
-                                                 label = "Test A Convertion Rate (%):", value = 2,  
+                                                 label = "Test 0 Convertion Rate (%):", value = 2,  
                                                  min = 0, max = 100, step= 0.5),
                                    sliderInput(  inputId = "pB",
-                                                 label = "Test B Convertion Rate (%):", value = 4,  
+                                                 label = "Test 1 Convertion Rate (%):", value = 4,  
                                                  min = 0, max = 100, step= 0.5),
                                    sliderInput(  inputId = "pC",
-                                                 label = "Test C Convertion Rate (%):", value = 2.5,  
+                                                 label = "Test 2 Convertion Rate (%):", value = 2.3,  
                                                  min = 0, max = 100, step= 0.5),
                                    #sliderInput(  inputId = "pD",
                                    #               label = "Test D Convertion Rate (%):", value = 0,  
                                    #               min = 0, max = 100, step= 1),
                                    sliderInput(  "counts",  
                                                 label = "Total users for each test:", 
-                                               min = 500, max = 20000, value = 10000, step= 1),
+                                               min = 500, max = 20000, value = 5000, step= 1),
                                    sliderInput(  "test_duration",  
                                                  label = "Duration of tests:", 
-                                                 min = 10, max = 300, value = 60, step= 1),
+                                                 min = 10, max = 100, value = 60, step= 1),
      
                                 h5("Beta Prior Parameters"),
                                 fluidRow(
@@ -135,19 +136,49 @@ body <- dashboardBody(
                        tableOutput("table2")
                           
                   )),
-           column(width = 8 ,
-                  box(  width = NULL, tableOutput('sim_data_head'),
+           #------------------------------------------------------------------------------
+           column(width = 9 ,
+                  box(  width = NULL, tableOutput('sim_data'),
                         collapsible = TRUE, collapsed = TRUE,
-                        title = 'Data Simulated', status = "primary", solidHeader = TRUE)
+                        title = 'Data Simulated', status = "primary", solidHeader = TRUE),
+                    #--------------------------------------------------------------------
+                  box(  width = NULL, tableOutput('Conv_change'),
+                        collapsible = TRUE, collapsed = TRUE,
+                        title = 'Data Computed - Conversion Rate Change', status = "primary", solidHeader = TRUE),  
+
+                  #box(  width = NULL, plotOutput('hist')  ,
+                  #      collapsible = TRUE,  
+                  #      title = 'Histogram', status = "primary", solidHeader = TRUE),  
+                  box(  width = NULL, collapsible = TRUE,status = "primary",
+                        title = "Conversion Rate Change Over time",  solidHeader = TRUE,
+                        tabsetPanel( 
+                          tabPanel("Bayesian-Change", plotOutput("B2", height="400px") ) ,
+                          tabPanel("Frequentist-Change", plotOutput("F2", height="400px") ),
+                          tabPanel("Bayesian-Rate",plotOutput("B1", height="400px") ),
+                          tabPanel("Frequentist-Rate", plotOutput("F1", height="400px") )
+                          
+                          #tabPanel("Bayesian-Change", plotOutput("Bayesian_change_plot", height="400px") ) ,
+                          #tabPanel("Frequentist-Change", plotOutput("Freq_change_plot", height="400px") ),
+                          #tabPanel("Bayesian-Rate",plotOutput("Bayesian_group_plot", height="400px") ),
+                          #tabPanel("Frequentist-Rate", plotOutput("Freq_group_plot", height="400px") )
+                        )
+                  ),
                   
-                  #box(  width = NULL, tableOutput("single_ABtest"),
-                  #      collapsible = TRUE,
-                  #      title = "Bayesian A/B Test Results", status = "primary", solidHeader = TRUE),
-                  #box(  width = NULL,
-                  #      plotOutput("ABtest_density",height="450px"), 
-                  #      plotOutput("ABtest_bestProb",height="250px"), collapsible = TRUE,
-                  #      title = "Prior and Posterior density", status = "primary", solidHeader = TRUE)
-           )
+                  box(  width = NULL, collapsible = TRUE,status = "primary",
+                        title = "A/B Test Plots",  solidHeader = TRUE,
+                        tabsetPanel( 
+                          tabPanel("Bayes Factor", plotOutput("plot1", height="400px") ) ,
+                          tabPanel("p-value", plotOutput("plot2", height="400px") ),
+                          tabPanel("Uplift",plotOutput("plot3", height="400px") ),
+                          tabPanel("Prob of better than default", plotOutput("plot4", height="400px") )
+                          
+                          #tabPanel("Bayes Factor", plotOutput("BF_plot", height="400px") ) ,
+                          #tabPanel("p-value", plotOutput("pval_plot", height="400px") ),
+                          #tabPanel("Uplift",plotOutput("Uplift_plot", height="400px") ),
+                          #tabPanel("Prob of better than default", plotOutput("prob_better_plot", height="400px") )
+                        )
+                  )
+                  )
            
          )
  ),

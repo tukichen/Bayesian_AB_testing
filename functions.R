@@ -8,62 +8,69 @@ library(BayesFactor)
 #----------------------------------------------------------------------------
 
 simulate_data <- function(num_tests, start_date, test_duration,counts , prob_list,
-                          alpha_0, beta_0, alpha){
+                          alpha_0, beta_0){
   DF <- data.frame( Test_group = numeric(), Date = as.Date(character()), Convert = numeric())
   for (i in 0:num_tests) {
-    data = data.frame( Test_group = as.integer(i), 
+    
+    data = data.frame( Test_group = i, 
                        Date = sample(seq(start_date, start_date+ test_duration -1 , by="day"), counts, replace = TRUE ), 
                        Convert = rbinom(n = counts, size= 1, prob = prob_list[i+1]))  
     DF <- rbind(DF, data)
   }
   return(DF)
 }
-
 #----------------------------------------------------------------------------
 # A function to do data manipulation
 #----------------------------------------------------------------------------
 
 transform_data <- function(df ,   # data frame 
-                           a = alpha , st_date = start_date, # confidence level
+                           a = Conf_alpha , st_date = start_date, # confidence level
                            a_0 = alpha_0, b_0= beta_0 # Beta prior parameter
 ) {
   num_tests = length(unique(df$Test_group))-1 
-  
   result= data.frame()
+  #---------start loop ---------------
   for (k in 0:num_tests){
     df_k = df[ df$Test_group == k, ]
-    data = table(df_k$Date, df_k$Convert)
-    data[,1] = data[,1] + data[,2]
+    data = as.data.frame.matrix( table(df_k$Date, df_k$Convert))
+    data[,1] = data[,1] + data[,2]   # change the first column from not convert to total counts
+    
+    Date = rownames(data)   #  row name to Date 
+    Day = as.numeric( as.Date(Date) - min(as.Date(Date)) +1)  # Compute date from start
+    data = cbind(Date, Day, k, data) # add to data
+  
+    rownames(data) <- NULL
+    colnames(data) <- c("Date", "Day", "Test_group", "Total","Convert")
     
     # calculate the cumulated clicked and cumulated converted
-    CumTot  = cumsum(data[,1])
-    CumConv = cumsum(data[,2])
-    p  =  CumConv/ CumTot 
+    data$Cum_Total  = cumsum(data$Total)
+    data$Cum_Convert = cumsum(data$Convert)
+    data$CRate  =  data$Cum_Convert/ data$Cum_Total 
     
     ## Upper and lower limit of frequentist confidence interval
-    Conf_LL =  p - qnorm(1-a/2, mean = 0, sd = 1) * sqrt( p*(1-p)/CumTot  )
-    Conf_UL =  p + qnorm(1-a/2, mean = 0, sd = 1) * sqrt( p*(1-p)/CumTot  )
+    data$Conf_LL =  data$CRate - qnorm(1-a/2, mean = 0, sd = 1) * sqrt( data$CRate*(1-data$CRate)/data$Cum_Total  )
+    data$Conf_UL =  data$CRate + qnorm(1-a/2, mean = 0, sd = 1) * sqrt( data$CRate*(1-data$CRate)/data$Cum_Total  )
+    data$Conf_LL = as.numeric(lapply(data$Conf_LL, function(x) max(0, x) ))
+    data$Conf_UL = as.numeric(lapply(data$Conf_UL, function(x) min(1, x) ))
     
     ## Summaries based on posterior probability 
-    post_alpha = a_0 + CumConv 
-    post_beta  = b_0 + CumTot - CumConv 
-    post_mean = (post_alpha)/ ( post_alpha + post_beta ) 
-    # compute equal-tailed credible interval for the posterior Beta distribution
-    Cred_LL = qbeta( a/2 , shape1 = post_alpha , shape2 = post_beta ) 
-    Cred_UL = qbeta(1-a/2, shape1 = post_alpha , shape2 = post_beta )   
+    post_alpha = a_0 + data$Cum_Convert 
+    post_beta  = b_0 + data$Cum_Total - data$Cum_Convert 
+    data$Post_mean = (post_alpha)/ ( post_alpha + post_beta ) 
     
-    data = cbind(Date = as.Date(rownames(data)), as.Date(rownames(data)) - st_date +1, df_k[1,'Test_group'], 
-                 data, CumTot  , CumConv, p , Conf_LL, Conf_UL , post_mean, Cred_LL, Cred_UL  )
+    # compute equal-tailed credible interval for the posterior Beta distribution
+    data$Cred_LL = qbeta( a/2 , shape1 = post_alpha , shape2 = post_beta ) 
+    data$Cred_UL = qbeta(1-a/2, shape1 = post_alpha , shape2 = post_beta )   
+    data$Cred_LL = as.numeric(lapply(data$Cred_LL, function(x) max(0, x) ))
+    data$Cred_UL = as.numeric(lapply(data$Cred_UL, function(x) min(1, x) ))
     
     # save the data set to result
     if (dim(result)[1] > 0){ result= rbind(result, data)}
     else{result= data}
   }
-  colnames(result)<- c("Date","Day", "Test_group", "Total","Convert", "Cum_Total", "Cum_Convert", "CRate", 
-                       "Conf_LL","Conf_UL" , "Post_mean", "Cred_LL", "Cred_UL")
+  #----------End of loop --------------
   return(result)
 }
-
 #----------------------------------------------------------------------------
 # helper function to make colors transparent: 
 #----------------------------------------------------------------------------
@@ -83,29 +90,28 @@ makeTransparent = function(..., alpha=0.15) {
 # The main function to plot point estimate and confidence region, 
 # with the option of using Bayesian or frequentist methods:
 #----------------------------------------------------------------------------
-Freq_plot <- function(df, num_tests=2, 
-                      Bayes = TRUE)  
+Freq_plot <- function(CR, num_tests=2,  Bayes = TRUE)  
 {
   # if Bayes== TRUE, plot Bayesian estimate and Credible Interval 
   if (Bayes== TRUE){column = 'Post_mean'; LL = 'Cred_LL' ; UL = 'Cred_UL'; 
   title= "Bayesian: Posterior Mean and Credible Interval of Proportion Over Time" }
   if (Bayes== FALSE) {column = 'CRate';   LL = 'Conf_LL' ; UL = 'Conf_UL'; 
   title= "Frequentist: Mean and Confidence Interval of Proportion Over Time" }
-  #-------------------------------------------------------------------------
+  
+  #-------------------------Set plot color ----------------------------
   cbPalette <- c("#009E73","#0072B2", "#E69F00",   "#D55E00", "#CC79A7","#F0E442","#56B4E9",  "#999999")
   fill_colors = makeTransparent(cbPalette)
-  #-------------------------------------------------------------------------
-  # Plot settings:
+  #------------------------Plot settings:---------------------------------
   # compute the upper and lower bound of y-axis to be 20% and 80% quantile of the upper and lower bound
-  min_val = min( quantile(df[, 'Cred_LL'], 0.01 ), quantile(df[, 'Conf_LL'], 0.01 ))
-  max_val = max( quantile(df[, 'Cred_UL'], 0.99 ), quantile(df[, 'Conf_UL'], 0.01 ))
-  max_days = quantile(df[,'Day'], 0.8)  # x-axis position to put legend
+  min_val  = min( quantile( CR$Cred_LL, 0.01 ), quantile( CR$Conf_LL, 0.01 ))
+  max_val  = max( quantile( CR$Cred_UL, 0.99 ), quantile( CR$Conf_UL, 0.01 ))
+  max_days = quantile(CR$Day, 0.8)  # x-axis position to put legend
   
   #-------------------------------------------------------------------------    
   data = CR[CR[,'Test_group']==0,]       
-  p<- plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col="red", lty=1 , ylim = c(min_val ,max_val) ,
-             main = title, 
-             xlab = 'Days after tests start' , ylab= 'Proportion')
+  p <- plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col="red", lty=1 , ylim = c(min_val ,max_val) ,
+              main = title, 
+              xlab = 'Days after tests start' , ylab= 'Proportion')
   polygon( c(data[,'Day'] , rev(data[,'Day']) ), c(data[, LL] , rev(data[, UL]) ), 
            col=rgb(1, 0, 0,0.1), border=NA)
   #-------------------------------------------------------------------------    
@@ -155,21 +161,21 @@ probability_C_beats_A_and_B <- function(alpha_A, beta_A, alpha_B, beta_B, alpha_
 
 #----------------------------------------------------------------------------
 # -------------prior and posterior density plot -----------------#
-#----------------------------------------------------------------------------
-density_plot <- function(alpha_A, beta_A , alpha_B, beta_B ){
+
+density_plot <- function(alpha_A, beta_A , alpha_B, beta_B , alpha_0, beta_0 ){
   theta<-seq(0,1,0.001) #create theta range from 0 to 1
-  prior <- dbeta(theta, 1,1)
+  prior <- dbeta(theta, alpha_0, beta_0)
   posterior_A <- dbeta(theta, alpha_A, beta_A ) 
   posterior_B <- dbeta(theta, alpha_B, beta_B )
   
-  min_prob = min(min(prior) , min(posterior_A), min(posterior_B))
-  max_prob = max(max(prior) , max(posterior_A), max(posterior_B))
+  min_prob = min(   min(posterior_A), min(posterior_B))
+  max_prob = max( max(posterior_A), max(posterior_B))
   
   # prior 
   prob_plot <- plot(theta, prior,  col="gray", type= 'l', lty=1, lwd = 2, 
                     xlab = 'Proportion', ylab = "Density",   ylim = c(min_prob ,max_prob),
                     main = "Prior and Posterior Densitys")
-  polygon( c(0 , theta,1),  c(0,prior,0),  col= makeTransparent("grey") , border=NA)
+  #polygon( c(0,  theta, 1),  c( 0,prior,0,  ),  col= makeTransparent("grey") , border=NA)
   
   # posterior of theta_A , theta_B
   lines(theta, posterior_A, lwd = 2, col="dodgerblue", lty=1)
@@ -191,6 +197,7 @@ density_plot <- function(alpha_A, beta_A , alpha_B, beta_B ){
 #----------------------------------------------------------------------------
 # ------------- Best probability Bar chart -----------------#
 #----------------------------------------------------------------------------
+
 bestProb_plot <- function(best_A, best_B){
   names <-c("A", "B")
   prob_list = c(best_A, best_B)
@@ -200,7 +207,6 @@ bestProb_plot <- function(best_A, best_B){
   text(y = yy,  x = prob_list, label = prob_list, pos = 2, cex = 0.8)
   
 }
-
 #----------------------------------------------------------------------------
 # -------------Plot posterior density of change -----------------#
 #----------------------------------------------------------------------------
@@ -230,8 +236,8 @@ posterior_plot <- function(change, mean_change, Cred_LL, Cred_UL){
 Bayes_AB_test <- function(nA, xA, nB, xB, 
                           out_data = TRUE, diff_plot= FALSE, 
                           bestProb_plot= FALSE, density_plot=FALSE, 
-                          alpha_0= 1, beta_0= 1,  # set both prior parameters to 1 by default
-                          digit =3  , nsim =100000, alpha = 0.1,
+                          alpha_0=  alpha_0, beta_0= beta_0,  # set both prior parameters to 1 by default
+                          digit =3  , nsim =100000, a = Conf_alpha,
                           calculate_CI = TRUE  ){ 
   
   # Conversion rate and uplift
@@ -261,8 +267,8 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
     mean_change = alpha_B/(alpha_B + beta_B) - alpha_A/(alpha_A + beta_A)
     
     # compute equal-tailed (1-alpha) Credible Interval         
-    Cred_LL   <- max(0, quantile(change , alpha/2 ))
-    Cred_UL   <- min(1, quantile(change , 1- alpha/2 ) )
+    Cred_LL   <- quantile(change , a/2 )
+    Cred_UL   <- quantile(change , 1- a/2 )
   }
   else {Cred_LL = NA; Cred_UL = NA}
   
@@ -286,22 +292,22 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
                 c("B", nB, xB, round(CR_B, digits = digit) ,  
                   round(uplift_B, digits = digit), 
                   round(mean_change, digits= digit),
-                  paste0("(", round( Cred_LL*100), digits= digit), ", ", 
-                             round(  Cred_UL*100), digits = digit), ")"), 
+                  paste0("(", round(max(0,Cred_LL*100), digits= digit), ", ", 
+                         round(min( Cred_UL*100, 100), digits = digit), ")"), 
                   round(best_B, digits = digit), 
-                  round(BF, digits = digit),
+                  round(log(BF), digits = digit),
                   
                   round( p_value, digits=digit ) ) )
   
   colnames(result) = c('Test', 'Users', 'Conversion','Conv Rate (%))', 
                        'Uplift (%)', 'Posterior mean of change','Credible Interval',
                        'Chance of being better(%)',
-                       'Bayes Factor', 
+                       'log Bayes Factor', 
                        'frequentist p-value')
   #-------------------------------------------------------------------
   
   if (density_plot ==TRUE){
-    density_plot(alpha_A, beta_A , alpha_B, beta_B )
+    density_plot(alpha_A, beta_A , alpha_B, beta_B, alpha_0, beta_0 )
   }
   if (bestProb_plot ==TRUE){
     bestProb_plot(round(best_A, digits= digit) , round(best_B, digits= digit) )
@@ -312,25 +318,40 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
   if(out_data ==TRUE) {return (result)}
   
 }
-
 #----------------------------------------------------------------------------
 # Bayesian A/B testing summary for change of conversion rate:
 #----------------------------------------------------------------------------
-Calculate_change <- function(df, k , a = alpha, nsim = 10000){
+Calculate_change <- function(CR, k , a = Conf_alpha, alpha_0  , 
+                             beta_0 , nsim = 10000, digit= 4){
   
   CR0 =  CR[CR[,'Test_group'] ==0, c('Day','Cum_Total','Cum_Convert',"CRate") ]
-  CR1 =  CR[CR[,'Test_group'] ==k, c('Cum_Total','Cum_Convert',"CRate") ]
-  CR01= merge(CR0, CR1, by=0, all=TRUE)
+  CR1 =  CR[CR[,'Test_group'] ==k, c('Day','Cum_Total','Cum_Convert',"CRate") ]
+  CR01= merge(CR0, CR1, by= 'Day', all=TRUE)
+  
+  
+  CR01 = cbind( k, CR01)
+  colnames(CR01) <- c("Test_group","Day", "Total_0","Convert_0", "CRate_0" ,"Total_k","Convert_k", "CRate_k")    
+  
   
   N= dim(CR0)[1]  # total number of days in the study
   
-  n0 = CR01[,3]; x0 = CR01[,4]; p0 =  CR01[,5] 
-  n1 = CR01[,6]; x1 = CR01[,7]; p1 =  CR01[,8]  
+  n0 = CR01$Total_0; x0 = CR01$Convert_0; p0 =  CR01$CRate_0 
+  n1 = CR01$Total_k; x1 = CR01$Convert_k; p1 =  CR01$CRate_k 
+  
+  
+  p_hat = (x0+ x1) /(n0+n1) # pooled estimate of proportion, assuming two groups have equal proportion
   
   ## ----------Upper and lower limit of frequentist confidence interval------------
   z = qnorm(1-a/2, mean = 0, sd = 1) 
-  Conf_LL =  (p1- p0) - z* sqrt( p0*(1-p0)/n0 + p1*(1-p1)/n1  )
-  Conf_UL =  (p1- p0) + z* sqrt( p0*(1-p0)/n0 + p1*(1-p1)/n1  )
+  
+  CR01$CRate_change = p1- p0
+  CR01$Conf_LL =  (p1- p0) - z* sqrt( p_hat*(1-p_hat) *(1/n0 + 1/n1) )
+  CR01$Conf_UL =  (p1- p0) + z* sqrt( p_hat*(1-p_hat) *(1/n0 + 1/n1) )
+  
+  Z_stat = (p1- p0)/ sqrt( p_hat*(1-p_hat) *(1/n0 + 1/n1) )
+  # Use normal approximation to calculate p-value
+  p_value = (1- pnorm(abs(Z_stat)) )*2 
+  
   #--------------------------------------------------------------------------------
   # For each day, simulate posterior distribution of difference p1-p0:
   # And compute Upper and lower limit of Bayesian credible interval----------------
@@ -338,15 +359,20 @@ Calculate_change <- function(df, k , a = alpha, nsim = 10000){
   Post_mean <- c()
   Cred_LL   <- c()
   Cred_UL   <- c()
+  logBF     <- c()
+  prob_better <- c()
+  
   for (i in 1:N){
     # posterior dist parameters: 
     alpha_A = alpha_0 + x0[i]
     alpha_B = alpha_0 + x1[i]  
     beta_A  = beta_0 + n0[i]-x0[i]
     beta_B  = beta_0 + n1[i]-x1[i]
+    
     # simulate theta0 and theta1
     theta0 = rbeta(n= nsim, shape1 = alpha_A, shape2 =beta_A)
     theta1 = rbeta(n= nsim, shape1 = alpha_B, shape2 =beta_B) 
+    
     # compute the difference
     change = theta1 - theta0
     # compute mean, sd, approximate 1-alpha Credible Interval 
@@ -355,116 +381,133 @@ Calculate_change <- function(df, k , a = alpha, nsim = 10000){
     Post_mean = c(Post_mean, mean_change)
     Cred_LL   <- c(Cred_LL, mean_change - z * sd_change)
     Cred_UL   <- c(Cred_UL, mean_change + z * sd_change)
+    
+    prob_better <- c(prob_better, prob_B_beats_A(alpha_A, beta_A, alpha_B, beta_B)*100 )
+    
+    #-----------Bayes Factors -------------------------------------------
+    mat = matrix(c(x0[i], n0[i]-x0[i], x1[i], n1[i]-x1[i]), nrow = 2 ) 
+    logBF = c( logBF, log(as.numeric(as.vector( contingencyTableBF( mat , sampleType = "indepMulti", 
+                                                                    fixedMargin = "cols")))) )
   }
   
-  
-  # -------------------Chance of being better than default, Uplift---------------------
-  
-  prob_better <- c()
-  Uplift <- c()
-  for (i in 1:N){
-    prob_better <- c(prob_better, as.numeric(Bayes_AB_test(nA= n0[i], xA=x0[i], 
-                                                           nB=n1[i], xB=x1[i], make_plot= FALSE)[2,6]) )
-    Uplift     <- c(Uplift    , as.numeric(Bayes_AB_test(nA= n0[i], xA=x0[i], 
-                                                         nB=n1[i], xB=x1[i], make_plot= FALSE)[2,5]) )    }
+  CR01$Post_mean = Post_mean
+  CR01$Cred_LL   = Cred_LL
+  CR01$Cred_UL   = Cred_UL
+  CR01$prob_better= prob_better
+  CR01$Uplift    = (p1 - p0)/p0 *100
+  CR01$logBF     = logBF
+  CR01$p_value   = p_value
   #--------------------------------------------------------------------------------
-  CR01 = cbind(CR01, p1-p0 ,Conf_LL, Conf_UL , Post_mean, Cred_LL, Cred_UL, prob_better, Uplift)
-  colnames(CR01) = c("Date","Day", "Total_0","Convert_0", "CRate_0", "Total_1","Convert_1", "CRate_1", 
-                     'CRate_change',"Conf_LL", "Conf_UL", "Post_mean", "Cred_LL","Cred_UL",
-                     "Prob_better", "Uplift_pct")
+  CR01 <- CR01[ -c(5,8) ]
   return(CR01)
 }
 
+
+#----------------------------------------------------------------------------
+# Apply the functionn to 3 test groups.
+#----------------------------------------------------------------------------
+Cal_all_change <- function(CR , Conf_alpha, alpha_0, beta_0 ){
+  num_tests = length(unique( CR[,'Test_group'])) -1 
+  result= data.frame()
+  for (k in 1:num_tests){
+    data = Calculate_change(CR, k , Conf_alpha, alpha_0, beta_0 )
+    # save the data set to result
+    if (dim(result)[1] > 0){ result= rbind(result, data)}
+    else{result= data}
+  }
+  return(result)
+}
 #----------------------------------------------------------------------------
 ### 3.3 Plot the point estimates of change in conversion rate, and thier credible interval over time
-Change_plot <- function( num_tests=3,   Bayes = TRUE)  
+#----------------------------------------------------------------------------
+Change_plot <- function(CR_change, Bayes = TRUE)  
 {
+  num_tests = length(unique( CR_change[,'Test_group'])) 
+  
   # if Bayes== TRUE, plot Bayesian estimate and Credible Interval 
   if (Bayes== TRUE){column = 'Post_mean'; LL = 'Cred_LL' ; UL = 'Cred_UL'; 
   title= "Bayesian: Posterior Mean and Credible Interval of Change Over Time" }
   else{        column = 'CRate_change';   LL = 'Conf_LL' ; UL = 'Conf_UL'; 
   title= "Frequentist: Mean and Confidence Interval of Change Over Time" }
-  #-------------------------------------------------------------------------
+  
+  #-------------- Set color for plot ------------------------------
   cbPalette <- c("#009E73","#0072B2", "#E69F00",   "#D55E00", "#CC79A7","#F0E442","#56B4E9",  "#999999")
   fill_colors = makeTransparent(cbPalette)
+  #-------------------------------------------------------------------------
+  # Plot settings:
+  # compute the upper and lower bound of y-axis to be 20% and 80% quantile of the upper and lower bound
+  min_val = min( quantile(CR_change[, 'Cred_LL'], 0.01 ), quantile(CR_change[, 'Conf_LL'], 0.01 ))
+  max_val = max( quantile(CR_change[, 'Cred_UL'], 0.99 ), quantile(CR_change[, 'Conf_UL'], 0.01 ))
+  max_days = quantile(CR_change[,'Day'], 0.8)  # x-axis position to put legend
   
-  # plot the default group
-  data =  CR01  
+  # -------------- plot the first group -------------- 
+  data =  CR_change[CR_change[,'Test_group'] == 1, ] 
   
-  plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col="red", lty=1 , ylim = c(-0.03, 0.06) ,
+  plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col= cbPalette[1], lty=1 , ylim = c(min_val, max_val) ,
          main = title, 
          xlab = 'Days after tests start' , ylab= 'Proportion')
   polygon( c(data[,'Day'] , rev(data[,'Day']) ), c(data[, LL] , rev(data[, UL]) ), 
-           col=rgb(1, 0, 0,0.1), border=NA)
+           col= fill_colors[1], border=NA)
   
-  # plot the rest test groups
+  # -------------- plot the other groups-------------- 
   for (k in 2:num_tests){
-    data = get(paste0("CR0", k))
+    data = CR_change[CR_change[,'Test_group'] == k, ]
     lines(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col= cbPalette[k], lty=k+1   )
     polygon( c(data[,'Day'] , rev(data[,'Day']) ), c(data[,LL] , rev(data[, UL]) ), 
              col= fill_colors[k], border=NA)
   }
   abline(h=0)
   
-  legend(50,  0.045, legend=c("Test 1", "Test 2", "A/A Test"),
-         col=c("red", cbPalette[2:k]), lty=1:(k+1), cex=0.8, title="Test group")
+  #------------------add legend to the plot -----------------
+  legend_list = c()
+  for (k in 1:num_tests){ legend_list = c(legend_list,  paste0("Test ", k) )}
+  legend( max_days , max_val, legend= legend_list, 
+          col=c( cbPalette[1:k]), lty=1:(k+1), cex=0.8, title="Test group")
   
 }
-
-
-
 
 #----------------------------------------------------------------------------
-### 3.3.3 Plot (a) the uplift and (b) probability of each test being better than the default over time
-plot_Uplift <- function( num_tests=3)  
-{
-  #-------------------------------------------------------------------------
+### ### Plot different summaries over time
+# 1. The Bayes factor
+# 2. p-value
+# 2. The uplift 
+# 3. Probability of each test being better than the default 
+#----------------------------------------------------------------------------
+
+plot_change_column <- function(CR_change, num_tests=3, variable, var_label, 
+                               hline= 0, plot_min_pct=0.01, plot_max_pct= 0.90,
+                               legend_position= "right",  y_max= 30 ){
+  #-------------- Set color for plot ------------------------------
   cbPalette <- c("#009E73","#0072B2", "#E69F00",   "#D55E00", "#CC79A7","#F0E442","#56B4E9",  "#999999")
   fill_colors = makeTransparent(cbPalette)
+  #-------------------------------------------------------------------------
+  # Plot settings:
+  # compute the upper and lower bound of y-axis to be 20% and 80% quantile of the upper and lower bound
+  min_val = quantile(CR_change[, variable], plot_min_pct )
+  max_val = quantile(CR_change[, variable], plot_max_pct ) 
+  print(min_val, max_val)
+  # -------------- plot the first group -------------- 
+  data =  CR_change[CR_change[,'Test_group'] == 1, ] 
+  plot(  data[,'Day'],  data[, variable] ,type = "l", lwd = 3, 
+         col= cbPalette[1], lty=1 , ylim = c(min_val, max_val) ,
+         main = paste0("Trend of ", var_label, " Over Time"), 
+         xlab = var_label , ylab= 'Percent')
   
-  #par(mfrow = c(1, 2))
-  #--------------------------------------------------------------------------
-  column ="Uplift_pct"
-  title ="Uplift percentage over time"
-  # plot the default group
-  data =  CR01  
-  plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col="red", lty=1 , ylim = c(-20, 120) ,
-         main = title, 
-         xlab = 'Days after tests start' , ylab= 'Percent')
-  
-  # plot the rest test groups
+  # -------------- plot the other groups-------------- 
   for (k in 2:num_tests){
-    data = get(paste0("CR0", k))
-    lines(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col= cbPalette[k], lty=k+1   )
+    data =  CR_change[CR_change[,'Test_group'] == k, ] 
+    lines(  data[,'Day'],  data[, variable] ,type = "l", lwd = 3, col= cbPalette[k], lty=k+1   )
   }
-  abline(h=50)
+  abline(h= hline)
   
-  legend(50,  80, legend=c("Test 1", "Test 2", "A/A Test"),
-         col=c("red", cbPalette[2:k]), lty=1:(k+1), cex=0.8, title="Test group")
+  #------------------add legend to the plot -----------------
+  legend_list = c()
+  for (k in 1:num_tests){ legend_list = c(legend_list,  paste0("Test ", k) )}
+  legend( legend_position , legend= legend_list, 
+          col=c(  cbPalette[1:k]), lty=1:(k+1), cex=0.8, title="Test group")
   
-  #--------------------------------------------------------------------------
-  column ="Prob_better"
-  title ="Probability (%) of better than default over time"
-  # plot the default group
-  data =  CR01  
-  plot(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col="red", lty=1 , ylim = c(-20, 120) ,
-         main = title, 
-         xlab = 'Days after tests start' , ylab= 'Percent')
-  
-  # plot the rest test groups
-  for (k in 2:num_tests){
-    data = get(paste0("CR0", k))
-    lines(  data[,'Day'],  data[, column] ,type = "l", lwd = 3, col= cbPalette[k], lty=k+1   )
-  }
-  abline(h=50)
-  
-  legend(50,  80, legend=c("Test 1", "Test 2", "A/A Test"),
-         col=c("red", cbPalette[2:k]), lty=1:(k+1), cex=0.8, title="Test group")
-  
-  
-  
+  #-------------------------------------------------------------------------
 }
-
 
 #----------------------------------------------------------------------------
 
