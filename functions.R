@@ -24,7 +24,7 @@ simulate_data <- function(num_tests, start_date, test_duration,counts , prob_lis
 #----------------------------------------------------------------------------
 
 transform_data <- function(df ,   # data frame 
-                           a = Conf_alpha , st_date = start_date, # confidence level
+                           a = Conf_alpha ,   # confidence level
                            a_0 = alpha_0, b_0= beta_0 # Beta prior parameter
 ) {
   num_tests = length(unique(df$Test_group))-1 

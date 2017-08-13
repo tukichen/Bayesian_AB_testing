@@ -1,4 +1,3 @@
-#-------------------------------------------------------------------------
 #  A web app to perform Bayesian A/B Testing
 #  Qiaolin Chen
 #-------------------------------------------------------------------------
@@ -11,15 +10,16 @@ sidebar <- dashboardSidebar(
               menuItem("Bayesian A/B Test", tabName="plot", icon=icon("line-chart"), selected=TRUE),
               menuItem("A/B Test on simulated data", tabName = "simulate", icon=icon("table")),
               menuItem("Upload and Analyze Data", tabName = "table", icon=icon("dashboard")),
-              menuItem("Download Codes",  icon = icon("file-text-o"),
+              menuItem("Jupyter Notebook", tabName = "readme", icon=icon("mortar-board")),
+              menuItem("Codes",  icon = icon("file-text-o"),
                        menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
                        menuSubItem("server.R", tabName = "server", icon = icon("angle-right")),
                        menuSubItem("functions.R", tabName = "functions", icon = icon("angle-right"))
-              ),
-              menuItem("Jupyter Notebook- Anotatation", tabName = "readme", icon=icon("mortar-board"))
+              )
+
   ),
   hr(),
-  conditionalPanel("input.tabs in c('plot', 'simulate','table') ",
+  conditionalPanel(condition = "input.tabs=='plot'" ,
                    fluidRow(
                      column(1),
                      column(10,
@@ -28,21 +28,19 @@ sidebar <- dashboardSidebar(
                         choices =list("90%" = 0.1, "95%" = 0.05 ,  "99%" = 0.01 ),
                         selected = 0.1 ) 
                      )
-
-
-
                    )
-  )
-
+   )
 )
 #-----------------------------------------------------------------------------------------
 body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
             withMathJax(), 
-            includeMarkdown("README.md")
+            includeMarkdown("Juypter_notebook/Bayesian_AB_testing.md")
             #includeHTML("Bayesian_AB_testing.html")
+ 
     ),
+
  #------------------------------------------------------------------------------------
 
     tabItem(tabName = "plot", 
@@ -86,12 +84,12 @@ body <- dashboardBody(
               
     ),
     #------------------------------------------------------------------------------------
- tabItem(tabName = "simulate", headerPanel("A/B Test Analysis"),
+ tabItem(tabName = "simulate", #headerPanel("A/B Test Analysis"),
          fluidRow(
            column(width = 3, 
                   box( width = NULL,  solidHeader = TRUE, 
                        title="Set True Values for Simulation", 
-                                   submitButton("Simulate Data and Tests"),
+                                   submitButton("Simulate Data"),
                                    br(), 
                                    sliderInput(  inputId = "pA",
                                                  label = "Test 0 Convertion Rate (%):", value = 2,  
@@ -126,15 +124,15 @@ body <- dashboardBody(
                        dateInput('start_date',
                                  label = 'Start Date input: yyyy-mm-dd',
                                  value = Sys.Date()
-                       ),
+                       )#,
                        
-                       br(),br(),                                  
-                       downloadButton('downloadTable', 'Download raw data'),
-                       br(),br(),
-                       tableOutput("table1"),
-                       downloadButton('downloadTable1', 'Download analyzed data'),
-                       br(),br(),
-                       tableOutput("table2")
+                       #br(),br(),                                  
+                       #downloadButton('downloadTable', 'Download raw data'),
+                       #br(),br(),
+                       #tableOutput("table1"),
+                       #downloadButton('downloadTable1', 'Download analyzed data'),
+                       #br(),br(),
+                       #tableOutput("table2")
                           
                   )),
            #------------------------------------------------------------------------------
@@ -153,15 +151,15 @@ body <- dashboardBody(
                   box(  width = NULL, collapsible = TRUE,status = "primary",
                         title = "Conversion Rate Change Over time",  solidHeader = TRUE,
                         tabsetPanel( 
-                          tabPanel("Bayesian-Change", plotOutput("B2", height="400px") ) ,
-                          tabPanel("Frequentist-Change", plotOutput("F2", height="400px") ),
-                          tabPanel("Bayesian-Rate",plotOutput("B1", height="400px") ),
-                          tabPanel("Frequentist-Rate", plotOutput("F1", height="400px") )
+                          #tabPanel("Bayesian-Change", plotOutput("B2", height="400px") ) ,
+                          #tabPanel("Frequentist-Change", plotOutput("F2", height="400px") ),
+                          #tabPanel("Bayesian-Rate",plotOutput("B1", height="400px") ),
+                          #tabPanel("Frequentist-Rate", plotOutput("F1", height="400px") )
                           
-                          #tabPanel("Bayesian-Change", plotOutput("Bayesian_change_plot", height="400px") ) ,
-                          #tabPanel("Frequentist-Change", plotOutput("Freq_change_plot", height="400px") ),
-                          #tabPanel("Bayesian-Rate",plotOutput("Bayesian_group_plot", height="400px") ),
-                          #tabPanel("Frequentist-Rate", plotOutput("Freq_group_plot", height="400px") )
+                          tabPanel("Bayesian-Change", plotOutput("Bayesian_change_plot", height="400px") ) ,
+                          tabPanel("Frequentist-Change", plotOutput("Freq_change_plot", height="400px") ),
+                          tabPanel("Bayesian-Rate",plotOutput("Bayesian_group_plot", height="400px") ),
+                          tabPanel("Frequentist-Rate", plotOutput("Freq_group_plot", height="400px") )
                         )
                   ),
                   
@@ -192,32 +190,65 @@ body <- dashboardBody(
                 # and specify the number of observations to view. Note that
                 # changes made to the caption in the textInput control are
                 # updated in the output area immediately as you type
-                    sidebarLayout(
-                        sidebarPanel(
-                            textInput("caption", "Caption:", "Data Summary"),
-
-                        selectInput("dataset", "Choose a dataset:",
-                                choices = c("n10K", "n20K","n5K", "n10K_closer")),
-                        numericInput("obs", "Number of observations to view:", 10)
-                            ),
-
-                    # Show the caption, a summary of the dataset and an HTML
-                    # table with the requested number of observations
-                    mainPanel(
-                    h3(textOutput("caption", container = span)),
-
-                        verbatimTextOutput("summary"),
-
-                            tableOutput("view")
-                        )
-                ),
+                #h3(textOutput("caption", container = span)),
+                #        verbatimTextOutput("summary"),
 
                 # make a file upload manager
-                fileInput("file", label = h5("Upload a CSV file with 3 columns: Test_group (0,1,...), Date (YYYY-MM-DD), and Convert (1=yes, 0=No)")),
-
+                h5("Upload a CSV file with 3 columns: Test_group (0,1,...), Date (YYYY-MM-DD), and Convert (1=yes, 0=No)."),
+                h5("If no data upload, an example data set will be plot and analyzed."),
+                fileInput("upload_raw_data", "Choose CSV File",
+                          accept = c(
+                            "text/csv",
+                            "text/comma-separated-values,text/plain",
+                            ".csv")
+                ),
+                fluidRow( column(3, h5("Input parameters for Beta prior: ")                                  
+                ),
+                column(2, 
+                       numericInput(inputId = "alpha_0_upload",  min = 0, step=0.1, 
+                                    label = "alpha:", value = 1)
+                ) ,
+                column(2, 
+                       numericInput(inputId = "beta_0_upload",  min = 0, step=0.1, 
+                                    label = "beta:", value = 1)
+                 )
+                ),  
+                
+                #submitButton("Upload and Perform A/B Test"), 
                 hr(),
-                fluidRow(column(5, verbatimTextOutput("value")))
-
+                box(  width = NULL, tableOutput('upload_data'),
+                      collapsible = TRUE, collapsed = TRUE,
+                      title = 'Data Uploaded and Converted', status = "primary", solidHeader = TRUE),
+                #--------------------------------------------------------------------
+                box(  width = NULL, tableOutput('upload_change'),
+                      collapsible = TRUE, collapsed = TRUE,
+                      title = 'Conversion Rate Change', status = "primary", solidHeader = TRUE),  
+                
+                #box(  width = NULL, plotOutput('hist')  ,
+                #      collapsible = TRUE,  
+                #      title = 'Histogram', status = "primary", solidHeader = TRUE),  
+                box(  width = NULL, collapsible = TRUE,status = "primary",
+                      #collapsed = TRUE,
+                      title = "Conversion Rate Change Over time",  solidHeader = TRUE,
+                      tabsetPanel( 
+                        tabPanel("Bayesian-Change", plotOutput("B2u", height="400px") ) ,
+                        tabPanel("Frequentist-Change", plotOutput("F2u", height="400px") ),
+                        tabPanel("Bayesian-Rate",plotOutput("B1u", height="400px") ),
+                        tabPanel("Frequentist-Rate", plotOutput("F1u", height="400px") )
+                      )
+                ),
+                
+                box(  width = NULL, collapsible = TRUE,status = "primary",
+                      #collapsed = TRUE,
+                      title = "A/B Test Plots",  solidHeader = TRUE,
+                      tabsetPanel( 
+                        tabPanel("Bayes Factor", plotOutput("plot1u", height="400px") ) ,
+                        tabPanel("p-value", plotOutput("plot2u", height="400px") ),
+                        tabPanel("Uplift",plotOutput("plot3u", height="400px") ),
+                        tabPanel("Prob of better than default", plotOutput("plot4u", height="400px") )
+                        
+                      )
+                ) 
 
             )
     ),
@@ -225,21 +256,21 @@ body <- dashboardBody(
 
     tabItem(tabName = "functions",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="functions.R",
-                 downloadButton('downloadData1', 'Download'),
+                 #downloadButton('downloadFunction', 'Download'),
                  br(),br(),
                  pre(includeText("functions.R"))
             )
     ),
     tabItem(tabName = "ui",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="ui.R",
-                 downloadButton('downloadData2', 'Download'),
+                 #downloadButton('downloadUi', 'Download'),
                  br(),br(),
                  pre(includeText("ui.R"))
             )
     ),
     tabItem(tabName = "server",
             box( width = NULL, status = "primary", solidHeader = TRUE, title="server.R",
-                 downloadButton('downloadData3', 'Download'),
+                 #downloadButton('downloadServer', 'Download'),
                  br(),br(),
                  pre(includeText("server.R"))
             )

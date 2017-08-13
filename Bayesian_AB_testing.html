@@ -11780,26 +11780,21 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Bayesian-A/B-Test-Calculator">Bayesian A/B Test Calculator<a class="anchor-link" href="#Bayesian-A/B-Test-Calculator">&#182;</a></h1><p>This notebook presents step by step instruction how to build a Bayesian A/B Test Calculator with visualization of results using R. <a href="https://qiaolinchen.shinyapps.io/ab_test/">https://qiaolinchen.shinyapps.io/ab_test/</a></p>
 <p>More information can be found on this github: <a href="https://github.com/tukichen/Bayesian_AB_testing">https://github.com/tukichen/Bayesian_AB_testing</a></p>
-<p>Here is an outline of the project:</p>
-<h3 id="1.-Dataset-simulation-and--Data-manipulation">1. Dataset simulation and  Data manipulation<a class="anchor-link" href="#1.-Dataset-simulation-and--Data-manipulation">&#182;</a></h3><ul>
-<li>To assess the performance of the Bayesina A/B test, I simulate datasets for which true test diferences are known.</li>
-<li>Write functions to process data and compute the cumulative counts and conversions.</li>
+<h2 id="Functions-of-this-web-app:">Functions of this web app:<a class="anchor-link" href="#Functions-of-this-web-app:">&#182;</a></h2><h3 id="1.-Bayesian-A/B-test-Calculator:">1. Bayesian A/B test Calculator:<a class="anchor-link" href="#1.-Bayesian-A/B-test-Calculator:">&#182;</a></h3><ul>
+<li>Perform a single A/B testing using input test data and prior parameters </li>
+<li>Summarize the Bayes factor, point estimate of rate change with credible interval, probability of variant better than default, and a frequentist p-value.</li>
+<li>Visualizae prior and posterior probabilities</li>
 </ul>
-<h3 id="2.-Bayesian-A/B-test-Calculator:">2. Bayesian A/B test Calculator:<a class="anchor-link" href="#2.-Bayesian-A/B-test-Calculator:">&#182;</a></h3><p>Write functions to do A/B testing for data observed up to a particular day:</p>
-<ul>
-<li>Summarize cumulative counts and cumulative conversion rates by group</li>
-<li>Derive posterior probability, point estimates and credible interval of difference in proportion</li>
-<li>Perform Bayesian testing using Bayes factors</li>
-<li>Visualization of prior, and posterior probabilities</li>
+<h3 id="2.-Compare-performance-of-Bayesian-and-Frequentist-A/B-Tesing-using-Simulation">2. Compare performance of Bayesian and Frequentist A/B Tesing using Simulation<a class="anchor-link" href="#2.-Compare-performance-of-Bayesian-and-Frequentist-A/B-Tesing-using-Simulation">&#182;</a></h3><ul>
+<li>Simulate datasets for which true test diferences are known.</li>
+<li>Summarize and visualize the conversion rates change over time</li>
+<li>Visualize the trends of conversion rate change over time with CI (Bayesian credible interval or frequentist confidence interval) over time</li>
+<li>Visualize the trends of the following quantities over time:  Bayes factor, p-value, Uplift probability of variant better than control </li>
 </ul>
-<h3 id="3.-Repeat-Bayesian-A/B-test-on-cumulative-conversion-rate-over-time:">3. Repeat Bayesian A/B test on cumulative conversion rate over time:<a class="anchor-link" href="#3.-Repeat-Bayesian-A/B-test-on-cumulative-conversion-rate-over-time:">&#182;</a></h3><p>For all days, perform Bayesian A/B testing using the above functions:</p>
-<ul>
-<li>When the user select a particular day after the tests begin, give summaries of Bayesian A/B testing</li>
-<li>Plot the point estimates of difference in proportion, and thier credible interval over time</li>
-<li>Plot the probability of each test being the best over time</li>
-<li>Plot the Bayes factor over time </li>
+<h3 id="3.-Upload-data-and-perform-Bayesian-A/B-test:">3. Upload data and perform Bayesian A/B test:<a class="anchor-link" href="#3.-Upload-data-and-perform-Bayesian-A/B-test:">&#182;</a></h3><ul>
+<li>Perform A/B test on datasets uploaded by users</li>
+<li>Give the same summary and visualization as above in simulation part</li>
 </ul>
-<h3 id="4.-Wrap-all-functions-to-build-a-Shiny-web-app">4. Wrap all functions to build a Shiny web app<a class="anchor-link" href="#4.-Wrap-all-functions-to-build-a-Shiny-web-app">&#182;</a></h3><p>Users can use this app to read A/B test data, perform tests, plot the pior and posterior probabilities, monitor the test progress by examing the trend of cumulative conversion rate change over time, and make decisions.</p>
 
 </div>
 </div>
@@ -30646,32 +30641,6 @@ rkJggg=="
 
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-r"><pre><span></span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-r"><pre><span></span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
 </div>
     </div>
   </div>
