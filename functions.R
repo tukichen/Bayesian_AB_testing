@@ -7,32 +7,27 @@ library(BayesFactor)
 ## Simulate datasets with known true proportion 
 #----------------------------------------------------------------------------
 
-simulate_data <- function(num_tests, start_date, test_duration,counts , prob_list ){
+simulate_data <- function(num_tests, start_date, test_duration,counts , prob_list,
+                          alpha_0, beta_0, alpha){
+  DF <- data.frame( Test_group = numeric(), Date = as.Date(character()), Convert = numeric())
   for (i in 0:num_tests) {
-    assign(paste0("DF", i), data.frame(
-      Test_group = i, 
-      Date = sample(seq(start_date, start_date+ test_duration -1 , by="day"), counts, replace = TRUE ), 
-      Convert = rbinom(n = counts, size= 1, prob = prob_list[i+1]))  
-    )
+    data = data.frame( Test_group = as.integer(i), 
+                       Date = sample(seq(start_date, start_date+ test_duration -1 , by="day"), counts, replace = TRUE ), 
+                       Convert = rbinom(n = counts, size= 1, prob = prob_list[i+1]))  
+    DF <- rbind(DF, data)
   }
-  
-  # Concatenate into one long dataset, on row corresponding to a users
-  DF = DF0
-  for ( k in 1:num_tests) {
-    DF= rbind(DF, get(paste0("DF", k)) )} 
   return(DF)
 }
-
 
 #----------------------------------------------------------------------------
 # A function to do data manipulation
 #----------------------------------------------------------------------------
 
 transform_data <- function(df ,   # data frame 
-                           a = alpha ,  # confidence level
+                           a = alpha , st_date = start_date, # confidence level
                            a_0 = alpha_0, b_0= beta_0 # Beta prior parameter
 ) {
-  num_tests = length(unique(DF$Test_group))-1 
+  num_tests = length(unique(df$Test_group))-1 
   
   result= data.frame()
   for (k in 0:num_tests){
@@ -57,7 +52,7 @@ transform_data <- function(df ,   # data frame
     Cred_LL = qbeta( a/2 , shape1 = post_alpha , shape2 = post_beta ) 
     Cred_UL = qbeta(1-a/2, shape1 = post_alpha , shape2 = post_beta )   
     
-    data = cbind(Date = as.Date(rownames(data)), as.Date(rownames(data)) - start_date +1, df_k[1,'Test_group'], 
+    data = cbind(Date = as.Date(rownames(data)), as.Date(rownames(data)) - st_date +1, df_k[1,'Test_group'], 
                  data, CumTot  , CumConv, p , Conf_LL, Conf_UL , post_mean, Cred_LL, Cred_UL  )
     
     # save the data set to result
@@ -68,7 +63,6 @@ transform_data <- function(df ,   # data frame
                        "Conf_LL","Conf_UL" , "Post_mean", "Cred_LL", "Cred_UL")
   return(result)
 }
-
 
 #----------------------------------------------------------------------------
 # helper function to make colors transparent: 
@@ -267,8 +261,8 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
     mean_change = alpha_B/(alpha_B + beta_B) - alpha_A/(alpha_A + beta_A)
     
     # compute equal-tailed (1-alpha) Credible Interval         
-    Cred_LL   <- quantile(change , alpha/2 )
-    Cred_UL   <- quantile(change , 1- alpha/2 )
+    Cred_LL   <- max(0, quantile(change , alpha/2 ))
+    Cred_UL   <- min(1, quantile(change , 1- alpha/2 ) )
   }
   else {Cred_LL = NA; Cred_UL = NA}
   
@@ -292,8 +286,8 @@ Bayes_AB_test <- function(nA, xA, nB, xB,
                 c("B", nB, xB, round(CR_B, digits = digit) ,  
                   round(uplift_B, digits = digit), 
                   round(mean_change, digits= digit),
-                  paste0("(", round(max(0,Cred_LL*100), digits= digit), ", ", 
-                         round(min( Cred_UL*100, 100), digits = digit), ")"), 
+                  paste0("(", round( Cred_LL*100), digits= digit), ", ", 
+                             round(  Cred_UL*100), digits = digit), ")"), 
                   round(best_B, digits = digit), 
                   round(BF, digits = digit),
                   

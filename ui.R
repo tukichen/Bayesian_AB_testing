@@ -65,8 +65,7 @@ body <- dashboardBody(
                                     numericInput(inputId = "beta_0",  min = 0, step=0.1, 
                                                  label = "beta:", value = 1)
                                     )
-                          ),
-                          submitButton("Perform A/B Test")
+                          ),submitButton("Perform A/B Test")
                      ),
                      box(  width = NULL, tableOutput("single_ABtest"),
                         collapsible = TRUE,
@@ -90,17 +89,17 @@ body <- dashboardBody(
            column(width = 4, 
                   box( width = NULL,  solidHeader = TRUE, 
                        title="Set True Values for Simulation", 
-                                   submitButton("Simulate Data and Tests"),
+                                   #submitButton("Simulate Data and Tests"),
                                    br(), 
                                    sliderInput(  inputId = "pA",
                                                  label = "Test A Convertion Rate (%):", value = 2,  
-                                                 min = 0, max = 100, step= 1),
+                                                 min = 0, max = 100, step= 0.5),
                                    sliderInput(  inputId = "pB",
                                                  label = "Test B Convertion Rate (%):", value = 4,  
-                                                 min = 0, max = 100, step= 1),
+                                                 min = 0, max = 100, step= 0.5),
                                    sliderInput(  inputId = "pC",
                                                  label = "Test C Convertion Rate (%):", value = 2.5,  
-                                                 min = 0, max = 100, step= 1),
+                                                 min = 0, max = 100, step= 0.5),
                                    #sliderInput(  inputId = "pD",
                                    #               label = "Test D Convertion Rate (%):", value = 0,  
                                    #               min = 0, max = 100, step= 1),
@@ -136,7 +135,10 @@ body <- dashboardBody(
                        tableOutput("table2")
                           
                   )),
-           column(width = 8 #,
+           column(width = 8 ,
+                  box(  width = NULL, tableOutput('sim_data_head'),
+                        collapsible = TRUE, collapsed = TRUE,
+                        title = 'Data Simulated', status = "primary", solidHeader = TRUE)
                   
                   #box(  width = NULL, tableOutput("single_ABtest"),
                   #      collapsible = TRUE,
