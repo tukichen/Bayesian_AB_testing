@@ -19,7 +19,7 @@ sidebar <- dashboardSidebar(
 
   ),
   hr(),
-  conditionalPanel(condition = "input.tabs=='plot'" ,
+  conditionalPanel(condition = "input.tabs in c('plot','simulate','table') " ,
                    fluidRow(
                      column(1),
                      column(10,

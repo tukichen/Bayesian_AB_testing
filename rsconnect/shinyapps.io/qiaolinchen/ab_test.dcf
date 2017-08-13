@@ -3,8 +3,8 @@ title:
 account: qiaolinchen
 server: shinyapps.io
 appId: 204300
-bundleId: 939273
+bundleId: 939276
 url: https://qiaolinchen.shinyapps.io/ab_test/
-when: 1502643693.36014
+when: 1502643857.71142
 asMultiple: FALSE
 asStatic: FALSE
