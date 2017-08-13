@@ -2,7 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(BayesFactor)
-
+library(markdown)
 #----------------------------------------------------------------------------
 ## Simulate datasets with known true proportion 
 #----------------------------------------------------------------------------
