@@ -22,7 +22,6 @@ install.packages("shiny");  library(shiny); runGitHub("Bayesian_AB_testing", "tu
 - Perform A/B test on datasets uploaded by users
 - Give the same summary and visualization as above in simulation part
 
-
 ## Backgroups and Methods
 
 Most A/B test approaches are centered around frequentist hypothesis tests used to come up with a point estimate (probability of rejecting the null) of a hard-to-interpret value. Oftentimes, the statistician or data scientist laying down the groundwork for the A/B test will have to do a power test to determine sample size and then interface with a Product Manager or Marketing Exec in order to relay the results. This quickly gets messy in terms of interpretability. More importantly it is simply not as robust as A/B testing given informative priors and the ability to inspect an entire distribution over a parameter, not just a point estimate.
